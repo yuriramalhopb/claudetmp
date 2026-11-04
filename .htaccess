@@ -1,0 +1,9 @@
+# Se o host não permitir apontar o DocumentRoot para /public, este arquivo
+# redireciona tudo para lá e bloqueia o acesso ao código-fonte.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(app|bin|database|storage|vendor)(/|$) - [F,L]
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^$ public/ [L]
+    RewriteRule ^((?!public/).*)$ public/$1 [L,NC]
+</IfModule>

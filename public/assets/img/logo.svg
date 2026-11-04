@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="31" fill="#ff7a1a"/>
+  <circle cx="32" cy="32" r="27" fill="#14110f"/>
+  <!-- pato de capacete -->
+  <path d="M20 40c0-8 6-14 14-14 3 0 5 1 7 2l6-2-2 6c1 2 1 4 1 6 0 7-6 12-13 12s-13-3-13-10z" fill="#ffd23f"/>
+  <path d="M22 30c1-8 8-13 15-12 6 1 10 5 10 10l-25 2z" fill="#ff7a1a"/>
+  <rect x="30" y="27" width="14" height="4" rx="2" fill="#1c1815"/>
+  <path d="M46 34l9 2-9 3z" fill="#ff9f40"/>
+  <circle cx="40" cy="33" r="1.8" fill="#14110f"/>
+  <path d="M10 50h44" stroke="#a99d91" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 4"/>
+</svg>

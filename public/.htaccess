@@ -1,0 +1,26 @@
+# Apache: aponte o DocumentRoot para esta pasta "public".
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Bloqueia arquivos ocultos (.env, .git...)
+    RewriteRule (^|/)\. - [F,L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    <FilesMatch "\.(css|js|svg|jpg|jpeg|png|webp|gif|woff2?)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
+
+# Limites de upload (ajuste se o host permitir)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 8M
+    php_value post_max_size 64M
+    php_value max_file_uploads 30
+    php_flag expose_php Off
+</IfModule>
