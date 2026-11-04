@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 /**
- * Acesso às configurações com notação de ponto: $config->get('db.driver').
+ * Acesso às configurações com notação de ponto: $config->get('db.host').
  */
 final class Config
 {

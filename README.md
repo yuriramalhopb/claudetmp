@@ -1,6 +1,6 @@
 # 🦆 Ducks Offroad — site e sistema da turma de trilha
 
-Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependências externas (roda em qualquer hospedagem com PHP + MySQL ou SQLite).
+Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependências externas usando **MySQL 5.7+/8 ou MariaDB 10.3+** (roda em qualquer hospedagem com PHP + MySQL).
 
 ## Funcionalidades
 
@@ -16,7 +16,7 @@ Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependênc
 
 ## Segurança
 
-- **SQL injection:** 100% prepared statements (PDO, emulação desligada); identificadores validados.
+- **SQL injection:** 100% prepared statements (PDO MySQL, emulação desligada, `utf8mb4`, modo estrito); identificadores validados.
 - **XSS:** todo dado impresso com `e()`; **Content-Security-Policy com nonce**, sem scripts/handlers inline.
 - **CSRF:** token por sessão validado em todo `POST` (comparação em tempo constante).
 - **Senhas:** Argon2id (fallback bcrypt), rehash automático, política mínima (8+ caracteres, letras e números).
@@ -33,7 +33,15 @@ Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependênc
 cp .env.example .env
 ```
 
-Edite o `.env` (banco, `APP_URL`, admin inicial). Depois:
+Crie o banco e um usuário no MySQL (ou pelo painel da hospedagem):
+
+```sql
+CREATE DATABASE ducks_offroad CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'ducks'@'localhost' IDENTIFIED BY 'uma-senha-forte';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, ALTER, REFERENCES ON ducks_offroad.* TO 'ducks'@'localhost';
+```
+
+Edite o `.env` (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `APP_URL`, admin inicial). Depois crie as tabelas e o primeiro admin:
 
 ```bash
 php bin/install.php
@@ -55,7 +63,8 @@ php bin/seed-demo.php
 
 - Aponte o **DocumentRoot para `public/`** (Apache já tem `.htaccess`; Nginx: veja `deploy/nginx.conf`).
 - Se não puder mudar o DocumentRoot, o `.htaccess` da raiz redireciona para `public/` e bloqueia as pastas internas.
-- Para MySQL: `DB_DRIVER=mysql` e os dados de acesso. As tabelas são criadas automaticamente (`database/schema.mysql.sql`).
+- As tabelas ficam em `database/schema.sql` (também são criadas automaticamente no primeiro acesso, se não existirem).
+- Use um usuário do MySQL **exclusivo do site**, só com permissão no banco `ducks_offroad` (nunca o `root`).
 - Dê permissão de escrita para `storage/` e `public/uploads/`.
 - Use **HTTPS** (Let's Encrypt).
 
@@ -83,7 +92,7 @@ app/
   Views/         templates PHP (layouts, partials, páginas, admin)
   routes.php     todas as rotas e middlewares (guest, auth, approved, admin)
 bin/             install, instagram-sync, seed-demo
-database/        schema.sqlite.sql e schema.mysql.sql
+database/        schema.sql (MySQL/MariaDB, utf8mb4)
 public/          index.php (front controller), assets, uploads
-storage/         banco SQLite, sessões e logs (fora da web)
+storage/         sessões e logs (fora da web)
 ```

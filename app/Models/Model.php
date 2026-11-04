@@ -42,7 +42,7 @@ abstract class Model
         return array_map(static fn ($v) => $v === '' ? null : $v, $data);
     }
 
-    /** Escapa curingas para uso em LIKE ... ESCAPE '!' (portável entre MySQL e SQLite). */
+    /** Escapa curingas para uso em LIKE ... ESCAPE '!' (independe do modo NO_BACKSLASH_ESCAPES do MySQL). */
     protected static function like(string $term): string
     {
         return '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_substr($term, 0, 80)) . '%';

@@ -18,7 +18,7 @@ use App\Models\Setting;
 use App\Services\ImageUploader;
 use App\Services\InstagramService;
 
-$db = new Database($config->get('db'), BASE_PATH);
+$db = new Database($config->get('db'));
 $service = new InstagramService(
     new InstagramPost($db),
     new Setting($db),

@@ -12,8 +12,6 @@ return [
         'timezone' => Env::get('APP_TIMEZONE', 'America/Sao_Paulo'),
     ],
     'db' => [
-        'driver' => Env::get('DB_DRIVER', 'sqlite'),
-        'path' => Env::get('DB_PATH', 'storage/data/ducks.sqlite'),
         'host' => Env::get('DB_HOST', '127.0.0.1'),
         'port' => Env::get('DB_PORT', 3306),
         'name' => Env::get('DB_NAME', 'ducks_offroad'),

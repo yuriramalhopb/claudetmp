@@ -2,7 +2,6 @@
 /vendor/
 /storage/logs/*
 /storage/sessions/*
-/storage/data/*
 !/storage/**/.gitkeep
 /public/uploads/**/*
 !/public/uploads/**/.gitkeep

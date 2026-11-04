@@ -34,7 +34,7 @@ final class App
     public function __construct(public readonly Config $config, public readonly string $basePath)
     {
         $this->logger = new Logger($basePath . '/storage/logs');
-        $this->db = new Database($config->get('db'), $basePath);
+        $this->db = new Database($config->get('db'));
         if (!$this->db->tableExists('users')) {
             $this->db->migrate($basePath . '/database');
         }

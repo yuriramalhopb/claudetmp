@@ -14,7 +14,7 @@ use App\Core\Database;
 use App\Models\Album;
 use App\Models\Event;
 
-$db = new Database($config->get('db'), BASE_PATH);
+$db = new Database($config->get('db'));
 $db->migrate(BASE_PATH . '/database');
 $events = new Event($db);
 $d = static fn (int $days, string $time) => date('Y-m-d', strtotime("+{$days} days")) . 'T' . $time;

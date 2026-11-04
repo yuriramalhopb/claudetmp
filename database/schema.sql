@@ -1,4 +1,4 @@
--- Schema MySQL/MariaDB - Ducks Offroad (idempotente). Charset utf8mb4 (suporta emojis).
+-- Schema MySQL 5.7+/8 ou MariaDB 10.3+ - Ducks Offroad (idempotente). Charset utf8mb4 (suporta emojis).
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
