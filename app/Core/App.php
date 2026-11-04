@@ -35,8 +35,11 @@ final class App
     {
         $this->logger = new Logger($basePath . '/storage/logs');
         $this->db = new Database($config->get('db'));
-        if (!$this->db->tableExists('users')) {
-            $this->db->migrate($basePath . '/database');
+        if ($this->db->needsMigration($basePath . '/database')) {
+            $applied = $this->db->migrate($basePath . '/database');
+            if ($applied) {
+                $this->logger->info('Migrações aplicadas: ' . implode(', ', $applied));
+            }
         }
         $this->request = Request::capture();
         $this->headers = new SecurityHeaders();

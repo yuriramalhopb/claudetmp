@@ -7,12 +7,14 @@ Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependênc
 | Área | O que tem |
 |---|---|
 | **Início** | Hero, próximas trilhas, últimas fotos, feed do Instagram, novos trilheiros |
+| **Trilhas do ano** | Calendário anual (`/trilhas-do-ano/2026`) com banner/flyer, data, cidade/UF, valor, categoria, nível, prazo de inscrição, link do Instagram e da inscrição de cada evento; filtros por estado, mês, categoria, nível e turma; navegação entre anos e por mês; download do calendário inteiro em `.ics` |
 | **Agenda** | Trilhas da Ducks e de outras turmas, filtros (tipo, nível, busca), eventos passados, confirmação de presença ("Eu vou!"), lista de quem vai, exportar `.ics`, Google Agenda, mapa, compartilhar (WhatsApp / Web Share) |
 | **Galeria** | Álbuns, lightbox com teclado e swipe, paginação, trilheiros enviam fotos (com aprovação do admin) |
 | **Instagram** | Sincronização automática via API oficial (imagens baixadas e salvas localmente, token renovado sozinho) **ou** posts adicionados pelo link (incorporação oficial) — inclusive posts de outras turmas |
 | **Trilheiros** | Cadastro completo (moto, cilindrada, nível, tipo sanguíneo, contato de emergência, foto), aprovação pelo admin, diretório público, perfil |
 | **Minha conta** | Editar perfil e foto, trocar senha, minhas trilhas, baixar meus dados, excluir conta (LGPD) |
-| **Painel admin** | Dashboard, aprovar/bloquear/promover trilheiros, ficha completa, exportar CSV, CRUD de eventos (com capa) e aprovação de sugestões, álbuns e fotos, Instagram, mensagens de contato, log de auditoria |
+| **Cadastro de trilha** | Nome, categoria, nível, distância, organizador, início/término, cidade, estado (UF), local de encontro, valor, inscrições até, vagas (controla o "Eu vou!"), o que está incluso, Instagram do evento, link de inscrição, WhatsApp da organização, banner e descrição |
+| **Painel admin** | Dashboard, aprovar/bloquear/promover trilheiros, ficha completa, exportar CSV, CRUD de eventos (com banner) e aprovação de sugestões, álbuns e fotos, Instagram, mensagens de contato, log de auditoria |
 
 ## Segurança
 
@@ -63,7 +65,7 @@ php bin/seed-demo.php
 
 - Aponte o **DocumentRoot para `public/`** (Apache já tem `.htaccess`; Nginx: veja `deploy/nginx.conf`).
 - Se não puder mudar o DocumentRoot, o `.htaccess` da raiz redireciona para `public/` e bloqueia as pastas internas.
-- As tabelas ficam em `database/schema.sql` (também são criadas automaticamente no primeiro acesso, se não existirem).
+- As tabelas ficam em `database/schema.sql` e as alterações posteriores em `database/migrations/`. Ambas são aplicadas automaticamente (no primeiro acesso ou com `php bin/install.php`); cada migração roda uma única vez e **preserva os dados** existentes.
 - Use um usuário do MySQL **exclusivo do site**, só com permissão no banco `ducks_offroad` (nunca o `root`).
 - Dê permissão de escrita para `storage/` e `public/uploads/`.
 - Use **HTTPS** (Let's Encrypt).
@@ -92,7 +94,7 @@ app/
   Views/         templates PHP (layouts, partials, páginas, admin)
   routes.php     todas as rotas e middlewares (guest, auth, approved, admin)
 bin/             install, instagram-sync, seed-demo
-database/        schema.sql (MySQL/MariaDB, utf8mb4)
+database/        schema.sql + migrations/ (MySQL/MariaDB, utf8mb4)
 public/          index.php (front controller), assets, uploads
 storage/         sessões e logs (fora da web)
 ```

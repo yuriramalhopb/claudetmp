@@ -12,30 +12,55 @@ final class Calendar
     {
     }
 
-    public function ics(array $event): string
+    /** Gera um calendário .ics com um ou vários eventos. */
+    public function ics(array $events): string
     {
-        $start = strtotime((string) $event['start_at']);
-        $end = $event['end_at'] ? strtotime((string) $event['end_at']) : $start + 4 * 3600;
-        $url = $this->siteUrl . '/agenda/' . (int) $event['id'];
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
             'PRODID:-//' . $this->escape($this->siteName) . '//Agenda//PT-BR',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
+            'X-WR-CALNAME:' . $this->escape($this->siteName . ' - Trilhas'),
+            'X-WR-TIMEZONE:' . date_default_timezone_get(),
+        ];
+        foreach ($events as $event) {
+            array_push($lines, ...$this->vevent($event));
+        }
+        $lines[] = 'END:VCALENDAR';
+        return implode("\r\n", array_map([$this, 'fold'], $lines)) . "\r\n";
+    }
+
+    private function vevent(array $event): array
+    {
+        $start = strtotime((string) $event['start_at']);
+        $end = $event['end_at'] ? strtotime((string) $event['end_at']) : $start + 4 * 3600;
+        $url = $this->siteUrl . '/agenda/' . (int) $event['id'];
+        $details = trim(implode("\n", array_filter([
+            $event['description'] ?? '',
+            !empty($event['price']) ? 'Valor: ' . $event['price'] : '',
+            !empty($event['instagram_url']) ? 'Instagram: ' . $event['instagram_url'] : '',
+            $url,
+        ])));
+        return [
             'BEGIN:VEVENT',
             'UID:evento-' . (int) $event['id'] . '@' . (parse_url($this->siteUrl, PHP_URL_HOST) ?: 'ducks'),
             'DTSTAMP:' . gmdate('Ymd\THis\Z'),
             'DTSTART:' . gmdate('Ymd\THis\Z', $start),
             'DTEND:' . gmdate('Ymd\THis\Z', $end),
             'SUMMARY:' . $this->escape((string) $event['title']),
-            'DESCRIPTION:' . $this->escape(trim(($event['description'] ?? '') . "\n\n" . $url)),
-            'LOCATION:' . $this->escape(trim(($event['location'] ?? '') . ' ' . ($event['city'] ?? ''))),
+            'DESCRIPTION:' . $this->escape($details),
+            'LOCATION:' . $this->escape(self::place($event)),
             'URL:' . $url,
             'END:VEVENT',
-            'END:VCALENDAR',
         ];
-        return implode("\r\n", array_map([$this, 'fold'], $lines)) . "\r\n";
+    }
+
+    /** "Local — Cidade/UF" */
+    public static function place(array $event): string
+    {
+        $city = trim(($event['city'] ?? '') . (!empty($event['state']) ? '/' . $event['state'] : ''));
+        return trim(($event['location'] ?? '') !== '' ? $event['location'] . ' — ' . $city : $city, ' —');
     }
 
     public function googleLink(array $event): string
@@ -47,13 +72,13 @@ final class Calendar
             'text' => $event['title'],
             'dates' => gmdate('Ymd\THis\Z', $start) . '/' . gmdate('Ymd\THis\Z', $end),
             'details' => excerpt((string) ($event['description'] ?? ''), 500) . "\n" . $this->siteUrl . '/agenda/' . (int) $event['id'],
-            'location' => trim(($event['location'] ?? '') . ' ' . ($event['city'] ?? '')),
+            'location' => self::place($event),
         ]);
     }
 
     public static function mapsLink(array $event): ?string
     {
-        $q = trim(($event['location'] ?? '') . ' ' . ($event['city'] ?? ''));
+        $q = trim(($event['location'] ?? '') . ' ' . ($event['city'] ?? '') . ' ' . ($event['state'] ?? ''));
         return $q === '' ? null : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($q);
     }
 

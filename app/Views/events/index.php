@@ -3,7 +3,10 @@
     <div class="container">
         <h1>Agenda de trilhas</h1>
         <p class="lead">Trilhas da Ducks e eventos de outras turmas da região.</p>
-        <?php if ($auth->isApproved()): ?><a class="btn btn-primary" href="/agenda/sugerir">+ Sugerir trilha de outra turma</a><?php endif; ?>
+        <div class="actions">
+            <a class="btn" href="/trilhas-do-ano">📆 Ver calendário de <?= date('Y') ?></a>
+            <?php if ($auth->isApproved()): ?><a class="btn btn-primary" href="/agenda/sugerir">+ Sugerir trilha de outra turma</a><?php endif; ?>
+        </div>
     </div>
 </section>
 <section class="section">

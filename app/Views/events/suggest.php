@@ -6,7 +6,7 @@
 </section>
 <section class="section">
     <div class="container narrow">
-        <form class="card form" method="post" action="/agenda/sugerir">
+        <form class="card form" method="post" action="/agenda/sugerir" enctype="multipart/form-data">
             <?= $csrf->field() ?>
             <?= $view->partial('event-form-fields', ['errors' => $errors, 'old' => $old, 'event' => null]) ?>
             <button class="btn btn-primary" type="submit">Enviar sugestão</button>

@@ -29,8 +29,11 @@ final class EventController extends Controller
     public function store(Request $request): Response
     {
         $data = $request->only(Event::FIELDS);
-        if ($fail = $this->validate($data, PublicEvents::RULES, '/admin/eventos/novo')) {
+        if ($fail = $this->validate($data, PublicEvents::rules(), '/admin/eventos/novo')) {
             return $fail;
+        }
+        if ($errors = PublicEvents::dateErrors($data)) {
+            return $this->failWith($errors, $data, '/admin/eventos/novo');
         }
         $cover = $this->storeCover($request);
         $id = $this->app->model(Event::class)->create($data, $request->bool('is_own'), 'approved', $this->auth->id(), $cover);
@@ -51,12 +54,18 @@ final class EventController extends Controller
         $event = $this->notFoundIfNull($events->find($this->idParam($request)));
         $data = $request->only(Event::FIELDS);
         $back = '/admin/eventos/' . $event['id'] . '/editar';
-        if ($fail = $this->validate($data, PublicEvents::RULES, $back)) {
+        if ($fail = $this->validate($data, PublicEvents::rules(), $back)) {
             return $fail;
         }
+        if ($errors = PublicEvents::dateErrors($data)) {
+            return $this->failWith($errors, $data, $back);
+        }
         $cover = $this->storeCover($request);
-        if ($cover !== null) {
+        if ($cover !== null || $request->bool('remove_cover')) {
             $this->app->uploader()->delete('events', $event['cover']);
+            if ($cover === null) {
+                $events->removeCover((int) $event['id']);
+            }
         }
         $events->updateEvent((int) $event['id'], $data, $request->bool('is_own'), $cover);
         $this->app->audit('editar_evento', '#' . $event['id']);

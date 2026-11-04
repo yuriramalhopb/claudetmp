@@ -24,7 +24,9 @@
     <div class="container">
         <div class="section-head">
             <h2>Próximas trilhas</h2>
-            <a class="link-more" href="/agenda">Agenda completa →</a>
+            <span class="actions">
+                <a class="link-more" href="/trilhas-do-ano">Todas as trilhas de <?= date('Y') ?> →</a>
+            </span>
         </div>
         <?php if ($events): ?>
             <div class="event-grid">

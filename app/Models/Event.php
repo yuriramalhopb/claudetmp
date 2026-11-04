@@ -8,7 +8,87 @@ final class Event extends Model
     protected string $table = 'events';
 
     public const LEVELS = ['leve' => 'Leve', 'moderado' => 'Moderado', 'pesado' => 'Pesado', 'extremo' => 'Extremo'];
-    public const FIELDS = ['title', 'description', 'start_at', 'end_at', 'location', 'city', 'organizer', 'level', 'distance_km', 'price', 'external_link'];
+
+    public const CATEGORIES = [
+        'trilha' => 'Trilha',
+        'enduro' => 'Enduro / Regularidade',
+        'motocross' => 'Motocross',
+        'encontro' => 'Encontro / Passeio',
+        'beneficente' => 'Trilha beneficente',
+        'treino' => 'Treino / Curso',
+        'outro' => 'Outro',
+    ];
+
+    public const STATES = [
+        'AC' => 'Acre', 'AL' => 'Alagoas', 'AP' => 'Amapá', 'AM' => 'Amazonas', 'BA' => 'Bahia',
+        'CE' => 'Ceará', 'DF' => 'Distrito Federal', 'ES' => 'Espírito Santo', 'GO' => 'Goiás',
+        'MA' => 'Maranhão', 'MT' => 'Mato Grosso', 'MS' => 'Mato Grosso do Sul', 'MG' => 'Minas Gerais',
+        'PA' => 'Pará', 'PB' => 'Paraíba', 'PR' => 'Paraná', 'PE' => 'Pernambuco', 'PI' => 'Piauí',
+        'RJ' => 'Rio de Janeiro', 'RN' => 'Rio Grande do Norte', 'RS' => 'Rio Grande do Sul',
+        'RO' => 'Rondônia', 'RR' => 'Roraima', 'SC' => 'Santa Catarina', 'SP' => 'São Paulo',
+        'SE' => 'Sergipe', 'TO' => 'Tocantins',
+    ];
+
+    /** Campos aceitos dos formulários (whitelist contra mass assignment). */
+    public const FIELDS = [
+        'title', 'description', 'start_at', 'end_at', 'location', 'city', 'state', 'organizer', 'category',
+        'level', 'distance_km', 'price', 'external_link', 'instagram_url', 'whatsapp', 'capacity', 'includes',
+        'registration_until',
+    ];
+
+    /**
+     * Trilhas de um ano, com filtros. Usado na página "Trilhas do ano".
+     *
+     * @param array{state?:string, month?:int, type?:string, category?:string, level?:string, q?:string} $f
+     */
+    public function byYear(int $year, array $f = []): array
+    {
+        $where = "e.status = 'approved' AND e.start_at >= ? AND e.start_at < ?";
+        $params = [sprintf('%04d-01-01 00:00:00', $year), sprintf('%04d-01-01 00:00:00', $year + 1)];
+
+        if (isset(self::STATES[$f['state'] ?? ''])) {
+            $where .= ' AND e.state = ?';
+            $params[] = $f['state'];
+        }
+        if (($f['month'] ?? 0) >= 1 && ($f['month'] ?? 0) <= 12) {
+            $where .= ' AND MONTH(e.start_at) = ?';
+            $params[] = (int) $f['month'];
+        }
+        if (isset(self::CATEGORIES[$f['category'] ?? ''])) {
+            $where .= ' AND e.category = ?';
+            $params[] = $f['category'];
+        }
+        [$extra, $extraParams] = $this->filters($f['type'] ?? '', $f['level'] ?? '', $f['q'] ?? '');
+
+        return $this->db->fetchAll(
+            "SELECT e.*, (SELECT COUNT(*) FROM event_rsvps r WHERE r.event_id = e.id) AS going
+             FROM events e WHERE {$where} AND {$extra} ORDER BY e.start_at ASC",
+            array_merge($params, $extraParams)
+        );
+    }
+
+    /** Anos que têm trilhas publicadas (sempre inclui o ano atual). */
+    public function years(): array
+    {
+        $years = array_map('intval', array_column(
+            $this->db->fetchAll("SELECT DISTINCT YEAR(start_at) AS y FROM events WHERE status = 'approved' ORDER BY y"),
+            'y'
+        ));
+        $years[] = (int) date('Y');
+        $years = array_values(array_unique($years));
+        sort($years);
+        return $years;
+    }
+
+    /** Estados que têm trilhas no ano (para o filtro). */
+    public function statesInYear(int $year): array
+    {
+        return array_column($this->db->fetchAll(
+            "SELECT DISTINCT state FROM events WHERE status = 'approved' AND state IS NOT NULL
+             AND start_at >= ? AND start_at < ? ORDER BY state",
+            [sprintf('%04d-01-01', $year), sprintf('%04d-01-01', $year + 1)]
+        ), 'state');
+    }
 
     public function upcoming(string $type = '', string $level = '', string $search = '', int $limit = 100): array
     {
@@ -46,9 +126,9 @@ final class Event extends Model
             $params[] = $level;
         }
         if ($search !== '') {
-            $where .= " AND (e.title LIKE ? ESCAPE '!' OR e.city LIKE ? ESCAPE '!' OR e.organizer LIKE ? ESCAPE '!' OR e.location LIKE ? ESCAPE '!')";
+            $where .= " AND (e.title LIKE ? ESCAPE '!' OR e.city LIKE ? ESCAPE '!' OR e.organizer LIKE ? ESCAPE '!' OR e.location LIKE ? ESCAPE '!' OR e.state = ?)";
             $like = self::like($search);
-            array_push($params, $like, $like, $like, $like);
+            array_push($params, $like, $like, $like, $like, mb_strtoupper(mb_substr($search, 0, 2)));
         }
         return [$where, $params];
     }
@@ -98,6 +178,11 @@ final class Event extends Model
         $this->db->update('events', $row, 'id = :id', ['id' => $id]);
     }
 
+    public function removeCover(int $id): void
+    {
+        $this->db->update('events', ['cover' => null, 'updated_at' => self::now()], 'id = :id', ['id' => $id]);
+    }
+
     public function approve(int $id): void
     {
         $this->db->update('events', ['status' => 'approved', 'updated_at' => self::now()], 'id = :id', ['id' => $id]);
@@ -112,6 +197,8 @@ final class Event extends Model
             }
         }
         $row['distance_km'] = isset($row['distance_km']) ? (int) $row['distance_km'] : null;
+        $row['capacity'] = isset($row['capacity']) ? (int) $row['capacity'] : null;
+        $row['state'] = isset($row['state']) ? mb_strtoupper($row['state']) : null;
         return $row;
     }
 

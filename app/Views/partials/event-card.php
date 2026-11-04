@@ -15,10 +15,11 @@ $ev = $event;
         </div>
         <h3><a href="/agenda/<?= (int) $ev['id'] ?>"><?= e($ev['title']) ?></a></h3>
         <p class="meta">
-            📍 <?= e(trim(($ev['location'] ? $ev['location'] . ' — ' : '') . $ev['city'])) ?>
+            📍 <?= e(trim($ev['city'] . (!empty($ev['state']) ? ' / ' . $ev['state'] : ''))) ?>
             <?php if (date('H:i', strtotime($ev['start_at'])) !== '00:00'): ?> · 🕗 <?= date('H\hi', strtotime($ev['start_at'])) ?><?php endif; ?>
             <?php if (!empty($ev['distance_km'])): ?> · <?= (int) $ev['distance_km'] ?> km<?php endif; ?>
         </p>
+        <?php if (!empty($ev['price'])): ?><p class="meta">💰 <?= e($ev['price']) ?></p><?php endif; ?>
         <?php if (!empty($ev['organizer']) && !$ev['is_own']): ?><p class="meta">Organização: <?= e($ev['organizer']) ?></p><?php endif; ?>
         <?php if (isset($ev['going']) && (int) $ev['going'] > 0): ?><p class="meta going">🏍️ <?= (int) $ev['going'] ?> trilheiro(s) confirmado(s)</p><?php endif; ?>
     </div>

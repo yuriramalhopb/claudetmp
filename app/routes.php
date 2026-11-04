@@ -27,6 +27,9 @@ $r->get('/instagram', [InstagramController::class, 'index']);
 $r->get('/agenda', [EventController::class, 'index']);
 $r->get('/agenda/{id}', [EventController::class, 'show']);
 $r->get('/agenda/{id}/calendario.ics', [EventController::class, 'ics']);
+$r->get('/trilhas-do-ano', [EventController::class, 'year']);
+$r->get('/trilhas-do-ano/{ano}', [EventController::class, 'year']);
+$r->get('/trilhas-do-ano/{ano}/calendario.ics', [EventController::class, 'yearIcs']);
 
 $r->get('/trilheiros', [MemberController::class, 'index']);
 $r->get('/trilheiros/{id}', [MemberController::class, 'show']);

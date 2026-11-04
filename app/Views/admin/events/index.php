@@ -1,6 +1,9 @@
 <div class="admin-head">
     <h1>Eventos</h1>
-    <a class="btn btn-primary btn-sm" href="/admin/eventos/novo">+ Novo evento</a>
+    <div class="actions">
+        <a class="btn btn-sm btn-ghost" href="/trilhas-do-ano" target="_blank">Ver "Trilhas do ano"</a>
+        <a class="btn btn-primary btn-sm" href="/admin/eventos/novo">+ Novo evento</a>
+    </div>
 </div>
 <form class="filters" method="get" action="/admin/eventos">
     <select name="status">
@@ -12,13 +15,15 @@
 </form>
 <div class="table-wrap">
 <table class="table">
-    <thead><tr><th>Data</th><th>Evento</th><th>Cidade</th><th>Tipo</th><th>Situação</th><th>Vão</th><th></th></tr></thead>
+    <thead><tr><th></th><th>Data</th><th>Evento</th><th>Cidade/UF</th><th>Valor</th><th>Tipo</th><th>Situação</th><th>Vão</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($events as $ev): ?>
         <tr>
+            <td><?php if ($b = upload_url('events', $ev['cover'], true)): ?><img class="avatar-sm square" src="<?= e($b) ?>" alt=""><?php endif; ?></td>
             <td class="nowrap"><?= e(date('d/m/Y H:i', strtotime($ev['start_at']))) ?></td>
             <td><a href="/admin/eventos/<?= (int) $ev['id'] ?>/editar"><?= e($ev['title']) ?></a><?php if ($ev['author']): ?><br><small class="muted">por <?= e($ev['author']) ?></small><?php endif; ?></td>
-            <td><?= e($ev['city']) ?></td>
+            <td><?= e($ev['city']) ?><?= $ev['state'] ? ' / ' . e($ev['state']) : '' ?></td>
+            <td><small><?= e($ev['price']) ?></small></td>
             <td><?= $ev['is_own'] ? '🦆 Ducks' : e($ev['organizer'] ?: 'Outra turma') ?></td>
             <td><span class="tag tag-status-<?= e($ev['status']) ?>"><?= $ev['status'] === 'pending' ? 'Pendente' : 'Publicado' ?></span></td>
             <td><?= (int) $ev['going'] ?></td>

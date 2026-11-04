@@ -132,16 +132,74 @@ final class Database
         }
     }
 
-    /** Executa database/schema.sql (idempotente: CREATE TABLE IF NOT EXISTS). */
-    public function migrate(string $schemaDir): void
+    /**
+     * Cria o schema base (database/schema.sql) e aplica, em ordem, as migrações
+     * pendentes de database/migrations/*.sql. Cada migração roda uma única vez
+     * (controle na tabela schema_migrations), preservando os dados existentes.
+     *
+     * @return string[] migrações aplicadas nesta execução
+     */
+    public function migrate(string $schemaDir): array
     {
         $file = $schemaDir . '/schema.sql';
         if (!is_file($file)) {
             throw new RuntimeException('Schema não encontrado: ' . $file);
         }
-        $sql = (string) file_get_contents($file);
-        $sql = preg_replace('/^\s*--.*$/m', '', $sql);
-        foreach (array_filter(array_map('trim', explode(';', (string) $sql))) as $statement) {
+        if (!$this->tableExists('users')) {
+            $this->runSqlFile($file);
+        }
+        $this->ensureMigrationsTable();
+        $done = array_flip($this->appliedMigrations());
+        $applied = [];
+        foreach ($this->migrationFiles($schemaDir) as $version => $path) {
+            if (isset($done[$version])) {
+                continue;
+            }
+            $this->runSqlFile($path);
+            $this->insert('schema_migrations', ['version' => $version, 'applied_at' => date('Y-m-d H:i:s')]);
+            $applied[] = $version;
+        }
+        return $applied;
+    }
+
+    /** Verificação barata feita a cada requisição: há algo para migrar? */
+    public function needsMigration(string $schemaDir): bool
+    {
+        if (!$this->tableExists('schema_migrations')) {
+            return true;
+        }
+        $files = $this->migrationFiles($schemaDir);
+        return count($files) > 0 && count(array_intersect(array_keys($files), $this->appliedMigrations())) < count($files);
+    }
+
+    private function ensureMigrationsTable(): void
+    {
+        $this->pdo->exec('CREATE TABLE IF NOT EXISTS schema_migrations (
+            version VARCHAR(100) NOT NULL PRIMARY KEY,
+            applied_at DATETIME NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    }
+
+    private function appliedMigrations(): array
+    {
+        return array_column($this->fetchAll('SELECT version FROM schema_migrations'), 'version');
+    }
+
+    /** @return array<string,string> versão => caminho, em ordem */
+    private function migrationFiles(string $schemaDir): array
+    {
+        $files = [];
+        foreach (glob($schemaDir . '/migrations/*.sql') ?: [] as $path) {
+            $files[basename($path, '.sql')] = $path;
+        }
+        ksort($files, SORT_STRING);
+        return $files;
+    }
+
+    private function runSqlFile(string $file): void
+    {
+        $sql = (string) preg_replace('/^\s*--.*$/m', '', (string) file_get_contents($file));
+        foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
             $this->pdo->exec($statement);
         }
     }

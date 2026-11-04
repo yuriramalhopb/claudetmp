@@ -23,7 +23,9 @@ final class Validator
         'organizer' => 'organizador', 'level' => 'nível', 'distance_km' => 'distância', 'price' => 'valor',
         'external_link' => 'link', 'message' => 'mensagem', 'caption' => 'legenda', 'permalink' => 'link do post',
         'lgpd' => 'termo de privacidade', 'current_password' => 'senha atual', 'album_id' => 'álbum',
-        'role' => 'perfil', 'status' => 'situação', 'access_token' => 'token', 'username' => 'usuário',
+        'role' => 'perfil', 'state' => 'estado', 'category' => 'categoria', 'instagram_url' => 'Instagram do evento',
+        'whatsapp' => 'WhatsApp', 'capacity' => 'vagas', 'includes' => 'o que está incluso',
+        'registration_until' => 'inscrições até', 'status' => 'situação', 'access_token' => 'token', 'username' => 'usuário',
     ];
 
     public function __construct(private readonly array $data)

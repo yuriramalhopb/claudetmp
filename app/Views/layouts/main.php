@@ -31,6 +31,7 @@
         <nav id="menu" class="main-nav" aria-label="Principal">
             <a class="<?= active($currentPath, '/') ?>" href="/">Início</a>
             <a class="<?= active($currentPath, '/agenda') ?>" href="/agenda">Agenda</a>
+            <a class="<?= active($currentPath, '/trilhas-do-ano') ?>" href="/trilhas-do-ano">Trilhas <?= date('Y') ?></a>
             <a class="<?= active($currentPath, '/galeria') ?>" href="/galeria">Galeria</a>
             <a class="<?= active($currentPath, '/instagram') ?>" href="/instagram">Instagram</a>
             <a class="<?= active($currentPath, '/trilheiros') ?>" href="/trilheiros">Trilheiros</a>
@@ -66,6 +67,7 @@
         <div>
             <h4>Navegue</h4>
             <a href="/agenda">Agenda de trilhas</a>
+            <a href="/trilhas-do-ano">Calendário <?= date('Y') ?></a>
             <a href="/galeria">Galeria</a>
             <a href="/trilheiros">Trilheiros</a>
             <a href="/sobre">Sobre a turma</a>

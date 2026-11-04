@@ -16,8 +16,8 @@ use App\Core\Validator;
 use App\Models\User;
 
 $db = new Database($config->get('db'));
-$db->migrate(BASE_PATH . '/database');
-echo "✔ Tabelas criadas/atualizadas.\n";
+$applied = $db->migrate(BASE_PATH . '/database');
+echo "✔ Tabelas criadas/atualizadas." . ($applied ? ' Migrações: ' . implode(', ', $applied) : '') . "\n";
 
 $users = new User($db);
 if ($users->countAdmins() > 0) {
