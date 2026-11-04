@@ -12,6 +12,7 @@ Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependênc
 | **Galeria** | Álbuns, lightbox com teclado e swipe, paginação, trilheiros enviam fotos (com aprovação do admin) |
 | **Instagram** | Sincronização automática via API oficial (imagens baixadas e salvas localmente, token renovado sozinho) **ou** posts adicionados pelo link (incorporação oficial) — inclusive posts de outras turmas |
 | **Trilheiros** | Cadastro completo (moto, cilindrada, nível, tipo sanguíneo, contato de emergência, foto), aprovação pelo admin, diretório público, perfil |
+| **App no celular (PWA)** | Instalável no Android, iPhone e computador (ícone do pato na tela inicial, tela cheia, atalhos para Agenda/Calendário/Galeria/Conta), botão "Instalar app", instruções automáticas no iPhone, página `/instalar` e tela "sem sinal" quando estiver offline |
 | **Minha conta** | Editar perfil e foto, trocar senha, minhas trilhas, baixar meus dados, excluir conta (LGPD) |
 | **Cadastro de trilha** | Nome, categoria, nível, distância, organizador, início/término, cidade, estado (UF), local de encontro, valor, inscrições até, vagas (controla o "Eu vou!"), o que está incluso, Instagram do evento, link de inscrição, WhatsApp da organização, banner e descrição |
 | **Painel admin** | Dashboard, aprovar/bloquear/promover trilheiros, ficha completa, exportar CSV, CRUD de eventos (com banner) e aprovação de sugestões, álbuns e fotos, Instagram, mensagens de contato, log de auditoria |
@@ -82,6 +83,18 @@ php bin/seed-demo.php
 ```
 
 Sem token, ainda dá para adicionar qualquer post público pelo link no painel.
+
+## App no celular (PWA)
+
+O site já é um aplicativo instalável — não precisa de Play Store/App Store.
+
+- **Requisito:** o site precisa estar em **HTTPS** (no teste local, `localhost` também funciona).
+- **Android (Chrome):** aparece o botão **📲 Instalar app** no menu do site, ou menu ⋮ → *Instalar app*.
+- **iPhone (Safari):** um aviso explica: *Compartilhar → Adicionar à Tela de Início*.
+- **Instruções para a turma:** compartilhe o link `https://seu-dominio/instalar`.
+- **Privacidade:** o service worker (`public/sw.js`) só guarda CSS/JS/ícones e imagens públicas. Páginas HTML (que podem ter dados pessoais, painel admin, tokens) **nunca** ficam no aparelho; ao sair da conta o cache de imagens é limpo.
+- **Atualizações:** ao mudar o `sw.js`, aumente `VERSION` nele para os celulares baixarem a versão nova. `sw.js` e `manifest.webmanifest` são servidos com `Cache-Control: no-cache` (`.htaccess` e `deploy/nginx.conf`).
+- **Ícones:** `public/assets/icons/` (192/512, versões *maskable* para Android e `apple-touch-icon` para iPhone).
 
 ## Estrutura
 

@@ -19,6 +19,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--font); -webkit-font-smoothing: antialiased; }
 img { max-width: 100%; display: block; }
@@ -360,3 +361,22 @@ textarea { resize: vertical; }
 .event-banner a { display: block; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
 .event-banner img { width: 100%; max-height: 720px; object-fit: contain; background: var(--bg-2); }
 .section-head .actions { margin: 0; }
+
+/* ---------- App instalável (PWA) ---------- */
+.install-btn { color: var(--duck) !important; }
+.install-btn[hidden], [data-install][hidden] { display: none !important; }
+.install-icon { margin: 0 auto 1rem; border-radius: 28px; }
+.install-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+.install-steps .card { margin: 0; }
+.install-steps ol { padding-left: 1.2rem; margin: 0; }
+.install-steps li { margin-bottom: .5rem; }
+.ios-share { display: inline-block; padding: 0 .35rem; border: 1px solid var(--line); border-radius: 6px; font-weight: 700; color: #4ea1ff; }
+.ios-install { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 150; display: flex; gap: .8rem; align-items: center;
+  background: var(--card); border: 1px solid var(--primary); border-radius: 16px; padding: .8rem 1rem; box-shadow: var(--shadow); font-size: .9rem; }
+.ios-install[hidden] { display: none; }
+.ios-install img { border-radius: 10px; flex: 0 0 auto; }
+.ios-install p { margin: 0; flex: 1; }
+.notice-success { background: rgba(70, 167, 88, .12); border-color: rgba(70, 167, 88, .5); }
+/* Rodando como app: respeita o notch/ilha do iPhone */
+.is-app .site-header { padding-top: env(safe-area-inset-top); }
+.is-app .site-footer { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }

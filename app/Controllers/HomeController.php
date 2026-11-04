@@ -40,6 +40,11 @@ final class HomeController extends Controller
         return $this->view('pages/about', ['title' => 'Sobre a turma']);
     }
 
+    public function install(Request $request): Response
+    {
+        return $this->view('pages/install', ['title' => 'Instalar o app']);
+    }
+
     public function privacy(Request $request): Response
     {
         return $this->view('pages/privacy', ['title' => 'Política de privacidade']);

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title><?= e(($title ?? 'Painel') . ' · Admin · ' . $siteName) ?></title>
-    <link rel="icon" href="/assets/img/logo.svg" type="image/svg+xml">
+<?= $view->partial('pwa-head') ?>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
 </head>

@@ -118,3 +118,69 @@
     });
   }
 })();
+
+// ---------- App instalável (PWA) ----------
+(() => {
+  'use strict';
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* modo privado */ } },
+  };
+
+  // Registra o service worker (exige HTTPS ou localhost)
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => { /* sem suporte */ });
+    });
+  }
+
+  if (isStandalone) {
+    document.documentElement.classList.add('is-app');
+    document.querySelectorAll('[data-installed-msg]').forEach((el) => { el.hidden = false; });
+  }
+
+  // Android / Chrome / Edge: botão "Instalar app"
+  let deferredPrompt = null;
+  const installButtons = document.querySelectorAll('[data-install]');
+  window.addEventListener('beforeinstallprompt', (ev) => {
+    ev.preventDefault();
+    deferredPrompt = ev;
+    installButtons.forEach((b) => { b.hidden = false; });
+  });
+  installButtons.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!deferredPrompt) { window.location.href = '/instalar'; return; }
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice.catch(() => null);
+      deferredPrompt = null;
+      installButtons.forEach((b) => { b.hidden = true; });
+    });
+  });
+  window.addEventListener('appinstalled', () => {
+    installButtons.forEach((b) => { b.hidden = true; });
+    store.set('ducks-installed', '1');
+  });
+
+  // iPhone/iPad no Safari: não existe botão automático, mostramos as instruções (uma vez por semana no máximo)
+  const ua = window.navigator.userAgent;
+  const isIos = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /safari/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
+  const banner = document.querySelector('[data-ios-install]');
+  const lastClosed = Number(store.get('ducks-ios-banner') || 0);
+  if (banner && isIos && isSafari && !isStandalone && Date.now() - lastClosed > 7 * 86400000) {
+    setTimeout(() => { banner.hidden = false; }, 2500);
+    banner.querySelector('[data-ios-close]')?.addEventListener('click', () => {
+      banner.hidden = true;
+      store.set('ducks-ios-banner', String(Date.now()));
+    });
+  }
+
+  // Ao sair da conta, limpa as imagens guardadas pelo app neste aparelho
+  document.querySelectorAll('form[action="/sair"]').forEach((form) => {
+    form.addEventListener('submit', () => {
+      navigator.serviceWorker?.controller?.postMessage('clear-image-cache');
+    });
+  });
+})();

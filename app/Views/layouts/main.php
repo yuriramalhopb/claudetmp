@@ -6,12 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ?? '') !== '' ? $title . ' · ' . $siteName : $siteName) ?></title>
     <meta name="description" content="<?= e($metaDescription ?? 'Ducks Offroad — turma de trilha de moto. Agenda de trilhas, galeria de fotos, Instagram e cadastro de trilheiros.') ?>">
-    <meta name="theme-color" content="#14110f">
     <meta property="og:title" content="<?= e($title ?? $siteName) ?>">
     <meta property="og:site_name" content="<?= e($siteName) ?>">
     <meta property="og:type" content="website">
     <?php if (!empty($ogImage)): ?><meta property="og:image" content="<?= e($ogImage) ?>"><?php endif; ?>
-    <link rel="icon" href="/assets/img/logo.svg" type="image/svg+xml">
+<?= $view->partial('pwa-head') ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap">
@@ -36,6 +35,7 @@
             <a class="<?= active($currentPath, '/instagram') ?>" href="/instagram">Instagram</a>
             <a class="<?= active($currentPath, '/trilheiros') ?>" href="/trilheiros">Trilheiros</a>
             <a class="<?= active($currentPath, '/contato') ?>" href="/contato">Contato</a>
+            <button class="link-btn install-btn" type="button" data-install hidden>📲 Instalar app</button>
             <span class="nav-sep"></span>
             <?php if ($auth->check()): ?>
                 <?php if ($auth->isAdmin()): ?><a class="<?= active($currentPath, '/admin') ?>" href="/admin">Painel</a><?php endif; ?>
@@ -76,11 +76,18 @@
             <h4>Siga a gente</h4>
             <a href="https://www.instagram.com/<?= e($igUsername) ?>/" target="_blank" rel="noopener noreferrer">@<?= e($igUsername) ?> no Instagram</a>
             <a href="/contato">Fale com a turma</a>
+            <a href="/instalar">📲 Instalar o app no celular</a>
             <a href="/privacidade">Privacidade (LGPD)</a>
         </div>
     </div>
     <div class="container footer-bottom">© <?= date('Y') ?> <?= e($siteName) ?>. Pilote com responsabilidade — use equipamento de proteção.</div>
 </footer>
+
+<div class="ios-install" data-ios-install hidden>
+    <img src="/assets/icons/apple-touch-icon.png" alt="" width="44" height="44">
+    <p><strong>Instale o app Ducks</strong><br>Toque em <span class="ios-share" aria-label="Compartilhar">⬆︎</span> <em>Compartilhar</em> e depois em <em>Adicionar à Tela de Início</em>.</p>
+    <button type="button" class="flash-close" data-ios-close aria-label="Fechar">×</button>
+</div>
 
 <div class="lightbox" data-lightbox hidden>
     <button class="lb-close" type="button" data-lb-close aria-label="Fechar">×</button>

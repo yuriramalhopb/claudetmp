@@ -10,9 +10,16 @@ DirectoryIndex index.php
     RewriteRule ^ index.php [QSA,L]
 </IfModule>
 
+AddType application/manifest+json .webmanifest
+
 <IfModule mod_headers.c>
     Header always unset X-Powered-By
-    <FilesMatch "\.(css|js|svg|jpg|jpeg|png|webp|gif|woff2?)$">
+    # O service worker e o manifesto precisam ser sempre revalidados (atualizações do app)
+    <FilesMatch "^(sw\.js|manifest\.webmanifest|offline\.html)$">
+        Header set Cache-Control "no-cache"
+        Header set X-Content-Type-Options "nosniff"
+    </FilesMatch>
+    <FilesMatch "^(?!sw\.js$).*\.(css|js|svg|jpg|jpeg|png|webp|gif|woff2?)$">
         Header set Cache-Control "public, max-age=2592000"
     </FilesMatch>
 </IfModule>

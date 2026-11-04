@@ -18,6 +18,7 @@ $r = new Router();
 $r->get('/', [HomeController::class, 'index']);
 $r->get('/sobre', [HomeController::class, 'about']);
 $r->get('/privacidade', [HomeController::class, 'privacy']);
+$r->get('/instalar', [HomeController::class, 'install']);
 
 $r->get('/galeria', [GalleryController::class, 'index']);
 $r->get('/galeria/{id}', [GalleryController::class, 'show']);

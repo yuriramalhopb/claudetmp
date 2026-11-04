@@ -1,0 +1,28 @@
+{
+  "id": "/",
+  "name": "Ducks Offroad",
+  "short_name": "Ducks",
+  "description": "Turma de trilha de moto: agenda de trilhas, calendário do ano, galeria, Instagram e trilheiros.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/?origem=app",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#14110f",
+  "theme_color": "#14110f",
+  "categories": ["sports", "social", "lifestyle"],
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Agenda de trilhas", "short_name": "Agenda", "url": "/agenda?origem=atalho", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Trilhas do ano", "short_name": "Calendário", "url": "/trilhas-do-ano?origem=atalho", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Galeria", "short_name": "Galeria", "url": "/galeria?origem=atalho", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Minha conta", "short_name": "Conta", "url": "/minha-conta?origem=atalho", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

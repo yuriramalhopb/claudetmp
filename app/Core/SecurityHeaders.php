@@ -35,6 +35,8 @@ final class SecurityHeaders
             "img-src 'self' data: https://*.cdninstagram.com https://*.fbcdn.net https://www.instagram.com",
             "frame-src https://www.instagram.com https://www.google.com",
             "connect-src 'self' https://www.instagram.com",
+            "manifest-src 'self'",
+            "worker-src 'self'",
             "form-action 'self'",
             "base-uri 'self'",
             "object-src 'none'",
