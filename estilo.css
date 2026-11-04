@@ -179,3 +179,66 @@ button { font: inherit; cursor: pointer; }
     border-radius: 12px;
 }
 a.proxima { display: inline-block; text-decoration: none; }
+
+/* ---------- Modo tabuada ---------- */
+.progresso {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 10px;
+    background: var(--primaria);
+    color: #fff;
+    border-radius: 999px;
+    letter-spacing: 0;
+}
+
+/* Mostra só as opções do modo escolhido. */
+.config form:has(#modo-tabuada:checked) .so-aleatorio { display: none; }
+.config form:not(:has(#modo-tabuada:checked)) .so-tabuada { display: none; }
+
+.numeros {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.numero { position: relative; }
+.numero input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.numero span {
+    display: block;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border: 2px solid var(--borda);
+    border-radius: 12px;
+}
+.numero input:checked + span { background: var(--primaria); border-color: var(--primaria); color: #fff; }
+.numero input:focus-visible + span { outline: 3px solid #ff8a00; }
+
+.ordem { display: flex; flex-direction: column; gap: 4px; font-weight: bold; }
+.ordem select {
+    font: inherit;
+    padding: 8px;
+    border: 2px solid var(--borda);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.estudo {
+    margin-top: 16px;
+    background: var(--cartao);
+    border: 2px solid var(--borda);
+    border-radius: 16px;
+    padding: 12px 16px;
+}
+.estudo summary { font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+.tabela {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px;
+    font-size: 1.3rem;
+}
+.tabela li { padding: 6px 10px; border-radius: 10px; background: var(--fundo); text-align: center; }

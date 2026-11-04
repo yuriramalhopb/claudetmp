@@ -1,6 +1,6 @@
 // Service worker da Tabuada Divertida.
 // Guarda os arquivos fixos (visual, ícones) e mostra uma tela amigável quando estiver sem internet.
-const VERSAO = 'tabuada-v1';
+const VERSAO = 'tabuada-v2';
 const ARQUIVOS = [
   'estilo.css',
   'app.js',

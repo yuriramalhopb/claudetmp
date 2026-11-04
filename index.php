@@ -5,6 +5,7 @@
  * - Soma, subtração, multiplicação e divisão (escolha quais).
  * - Escolha quantos dígitos tem cada número.
  * - Escolha quantas opções de resposta aparecem.
+ * - Modo Tabuada: estude a tabuada do 1 ao 10, em ordem ou misturada.
  * - Ao clicar numa opção, o PHP verifica se está certa.
  * Sem login e sem banco de dados: tudo fica na sessão do navegador.
  */
@@ -24,6 +25,9 @@ const PADRAO = [
     'digitos1'  => 1,
     'digitos2'  => 1,
     'opcoes'    => 4,
+    'modo'      => 'aleatorio',   // 'aleatorio' ou 'tabuada'
+    'numeros'   => [2],           // tabuadas escolhidas (1 a 10)
+    'ordem'     => 'sequencia',   // 'sequencia' (1 a 10) ou 'misturada'
 ];
 
 function e(string|int $v): string
@@ -45,8 +49,66 @@ function aleatorio(int $digitos): int
     return random_int($min, $max);
 }
 
-/** Cria uma conta nova de acordo com as configurações. */
-function gerarConta(array $cfg): array
+/**
+ * Cria uma conta nova de acordo com as configurações.
+ * $passo é a posição na sequência (usado na tabuada em ordem).
+ */
+function gerarConta(array $cfg, int $passo = 0): array
+{
+    $conta = $cfg['modo'] === 'tabuada' ? contaTabuada($cfg, $passo) : contaAleatoria($cfg);
+    ['op' => $op, 'a' => $a, 'b' => $b, 'resposta' => $r] = $conta;
+
+    // Erros "típicos" para as opções ficarem parecidas com a resposta certa.
+    $parecidas = match ($op) {
+        'multiplicacao' => [$a * ($b + 1), $a * ($b - 1), ($a + 1) * $b, ($a - 1) * $b],
+        'divisao'       => [$r + 1, $r - 1, $r * 2],
+        default         => [$r + 1, $r - 1, $r + 10, $r - 10],
+    };
+
+    return $conta + [
+        'opcoes'    => gerarOpcoes($r, $cfg['opcoes'], $parecidas),
+        'escolhida' => null,
+    ];
+}
+
+/**
+ * Tabuada do N (N de 1 a 10), com K indo de 1 a 10:
+ *   soma: N + K | subtração: (N + K) − N | multiplicação: N × K | divisão: (N × K) ÷ N
+ */
+function contaTabuada(array $cfg, int $passo): array
+{
+    $numeros = $cfg['numeros'];
+    $ops     = $cfg['operacoes'];
+
+    if ($cfg['ordem'] === 'sequencia') {
+        $i  = $passo % (count($numeros) * count($ops) * 10);
+        $n  = $numeros[intdiv($i, count($ops) * 10)];
+        $op = $ops[intdiv($i, 10) % count($ops)];
+        $k  = $i % 10 + 1;
+    } else {
+        $n  = $numeros[array_rand($numeros)];
+        $op = $ops[array_rand($ops)];
+        $k  = random_int(1, 10);
+    }
+
+    [$a, $b, $r] = linhaTabuada($op, $n, $k);
+
+    return ['op' => $op, 'a' => $a, 'b' => $b, 'resposta' => $r, 'tabuada' => $n, 'k' => $k];
+}
+
+/** Uma linha da tabuada do N para a tabela de estudo: [a, b, resultado]. */
+function linhaTabuada(string $op, int $n, int $k): array
+{
+    return match ($op) {
+        'soma'          => [$n, $k, $n + $k],
+        'subtracao'     => [$n + $k, $n, $k],
+        'multiplicacao' => [$n, $k, $n * $k],
+        default         => [$n * $k, $n, $k],
+    };
+}
+
+/** Conta com números aleatórios, com a quantidade de dígitos escolhida. */
+function contaAleatoria(array $cfg): array
 {
     $op = $cfg['operacoes'][array_rand($cfg['operacoes'])];
     $d1 = $cfg['digitos1'];
@@ -90,20 +152,25 @@ function gerarConta(array $cfg): array
             break;
     }
 
-    return [
-        'op'        => $op,
-        'a'         => $a,
-        'b'         => $b,
-        'resposta'  => $r,
-        'opcoes'    => gerarOpcoes($r, $cfg['opcoes']),
-        'escolhida' => null,
-    ];
+    return ['op' => $op, 'a' => $a, 'b' => $b, 'resposta' => $r];
 }
 
 /** Cria respostas erradas parecidas com a certa e embaralha tudo. */
-function gerarOpcoes(int $certa, int $quantidade): array
+function gerarOpcoes(int $certa, int $quantidade, array $parecidas = []): array
 {
     $opcoes = [$certa => true];
+
+    // Até 2 erros "típicos" (ex.: 7 × 8 = 49 ou 64), o resto é sorteado perto da resposta.
+    shuffle($parecidas);
+    foreach ($parecidas as $p) {
+        if (count($opcoes) >= min($quantidade, 3)) {
+            break;
+        }
+        if ($p >= 0) {
+            $opcoes[$p] = true;
+        }
+    }
+
     $alcance = max(5, (int) round(abs($certa) * 0.2));
     $tentativas = 0;
 
@@ -139,6 +206,10 @@ function lerConfig(array $post): array
         'digitos1'  => $int($post['digitos1'] ?? null, 1, 4, PADRAO['digitos1']),
         'digitos2'  => $int($post['digitos2'] ?? null, 1, 4, PADRAO['digitos2']),
         'opcoes'    => $int($post['opcoes'] ?? null, 2, 6, PADRAO['opcoes']),
+        'modo'      => ($post['modo'] ?? '') === 'tabuada' ? 'tabuada' : 'aleatorio',
+        'numeros'   => array_values(array_intersect(range(1, 10), array_map('intval', (array) ($post['numeros'] ?? []))))
+                       ?: PADRAO['numeros'],
+        'ordem'     => ($post['ordem'] ?? '') === 'misturada' ? 'misturada' : 'sequencia',
     ];
 }
 
@@ -148,9 +219,10 @@ function placarZerado(): array
 }
 
 // ---------- Estado ----------
-$_SESSION['config'] ??= PADRAO;
+$_SESSION['config'] = array_merge(PADRAO, $_SESSION['config'] ?? []);
 $_SESSION['placar'] ??= placarZerado();
-$_SESSION['conta']  ??= gerarConta($_SESSION['config']);
+$_SESSION['passo']  ??= 0;
+$_SESSION['conta']  ??= gerarConta($_SESSION['config'], $_SESSION['passo']);
 
 // ---------- Ações (POST → redireciona, para F5 não repetir a resposta) ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -172,13 +244,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($p);
         }
     } elseif ($acao === 'proxima') {
-        $_SESSION['conta'] = gerarConta($_SESSION['config']);
-    } elseif ($acao === 'configurar') {
-        $_SESSION['config'] = lerConfig($_POST);
-        $_SESSION['conta'] = gerarConta($_SESSION['config']);
-    } elseif ($acao === 'zerar') {
-        $_SESSION['placar'] = placarZerado();
-        $_SESSION['conta'] = gerarConta($_SESSION['config']);
+        $_SESSION['passo']++;
+        $_SESSION['conta'] = gerarConta($_SESSION['config'], $_SESSION['passo']);
+    } elseif ($acao === 'configurar' || $acao === 'zerar') {
+        if ($acao === 'configurar') {
+            $_SESSION['config'] = lerConfig($_POST);
+        } else {
+            $_SESSION['placar'] = placarZerado();
+        }
+        $_SESSION['passo'] = 0;
+        $_SESSION['conta'] = gerarConta($_SESSION['config'], 0);
     }
 
     header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?'), true, 303);
@@ -194,6 +269,9 @@ $acertou   = $respondeu && $conta['escolhida'] === $conta['resposta'];
 $elogios = ['Muito bem! 🎉', 'Acertou! ⭐', 'Mandou bem! 🚀', 'Isso aí! 🏆', 'Show de bola! ⚽', 'Que craque! 🌟'];
 $animos  = ['Quase! Vamos tentar outra? 💪', 'Não foi dessa vez, mas você consegue! 🙂', 'Errar faz parte de aprender! 📚'];
 $mensagem = $respondeu ? ($acertou ? $elogios[array_rand($elogios)] : $animos[array_rand($animos)]) : '';
+
+$modoTabuada = $cfg['modo'] === 'tabuada' && isset($conta['tabuada']);
+$fimDaTabuada = $modoTabuada && $respondeu && $cfg['ordem'] === 'sequencia' && $conta['k'] === 10;
 
 $total = $placar['acertos'] + $placar['erros'];
 $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 0;
@@ -238,7 +316,16 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
     </header>
 
     <section class="cartao <?= $respondeu ? ($acertou ? 'acertou' : 'errou') : '' ?>">
-        <p class="tipo"><?= e(OPERACOES[$conta['op']]['nome']) ?></p>
+        <p class="tipo">
+            <?php if ($modoTabuada): ?>
+                Tabuada do <?= e($conta['tabuada']) ?> · <?= e(OPERACOES[$conta['op']]['nome']) ?>
+                <?php if ($cfg['ordem'] === 'sequencia'): ?>
+                    <span class="progresso"><?= e($conta['k']) ?> de 10</span>
+                <?php endif; ?>
+            <?php else: ?>
+                <?= e(OPERACOES[$conta['op']]['nome']) ?>
+            <?php endif; ?>
+        </p>
         <p class="conta">
             <span><?= e($conta['a']) ?></span>
             <span class="sinal"><?= e(OPERACOES[$conta['op']]['simbolo']) ?></span>
@@ -273,6 +360,9 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
             <?php if (!$acertou): ?>
                 <p class="dica">A resposta certa é <strong><?= e($conta['resposta']) ?></strong>.</p>
             <?php endif; ?>
+            <?php if ($fimDaTabuada): ?>
+                <p class="mensagem">Você chegou ao fim da tabuada do <?= e($conta['tabuada']) ?>! 🥳</p>
+            <?php endif; ?>
             <form method="post">
                 <input type="hidden" name="acao" value="proxima">
                 <button type="submit" class="proxima" autofocus>Próxima conta ➜</button>
@@ -282,10 +372,55 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
         <?php endif; ?>
     </section>
 
+    <?php if ($modoTabuada): ?>
+        <details class="estudo">
+            <summary>📖 Ver a tabuada do <?= e($conta['tabuada']) ?> (<?= e(OPERACOES[$conta['op']]['nome']) ?>)</summary>
+            <ol class="tabela">
+                <?php for ($k = 1; $k <= 10; $k++):
+                    [$la, $lb, $lr] = linhaTabuada($conta['op'], $conta['tabuada'], $k); ?>
+                    <li><?= e($la) ?> <?= e(OPERACOES[$conta['op']]['simbolo']) ?> <?= e($lb) ?> = <strong><?= e($lr) ?></strong></li>
+                <?php endfor; ?>
+            </ol>
+        </details>
+    <?php endif; ?>
+
     <details class="config" <?= $total === 0 ? 'open' : '' ?>>
         <summary>⚙️ Configurações</summary>
         <form method="post">
             <input type="hidden" name="acao" value="configurar">
+
+            <fieldset>
+                <legend>Como quer jogar?</legend>
+                <div class="checks modos">
+                    <label class="check">
+                        <input type="radio" name="modo" value="aleatorio" <?= $cfg['modo'] === 'aleatorio' ? 'checked' : '' ?>>
+                        <span>🎲 Contas aleatórias</span>
+                    </label>
+                    <label class="check">
+                        <input type="radio" name="modo" value="tabuada" id="modo-tabuada" <?= $cfg['modo'] === 'tabuada' ? 'checked' : '' ?>>
+                        <span>📘 Tabuada (1 a 10)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <fieldset class="so-tabuada">
+                <legend>Tabuada de quais números?</legend>
+                <div class="numeros">
+                    <?php for ($i = 1; $i <= 10; $i++): ?>
+                        <label class="numero">
+                            <input type="checkbox" name="numeros[]" value="<?= $i ?>"
+                                <?= in_array($i, $cfg['numeros'], true) ? 'checked' : '' ?>>
+                            <span><?= $i ?></span>
+                        </label>
+                    <?php endfor; ?>
+                </div>
+                <label class="ordem">Ordem
+                    <select name="ordem">
+                        <option value="sequencia" <?= $cfg['ordem'] === 'sequencia' ? 'selected' : '' ?>>Em ordem (do 1 ao 10)</option>
+                        <option value="misturada" <?= $cfg['ordem'] === 'misturada' ? 'selected' : '' ?>>Misturada</option>
+                    </select>
+                </label>
+            </fieldset>
 
             <fieldset>
                 <legend>Quais contas?</legend>
@@ -301,7 +436,7 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
             </fieldset>
 
             <div class="linha">
-                <label>Dígitos do 1º número
+                <label class="so-aleatorio">Dígitos do 1º número
                     <select name="digitos1">
                         <?php for ($i = 1; $i <= 4; $i++): ?>
                             <option value="<?= $i ?>" <?= $cfg['digitos1'] === $i ? 'selected' : '' ?>>
@@ -310,7 +445,7 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
                         <?php endfor; ?>
                     </select>
                 </label>
-                <label>Dígitos do 2º número
+                <label class="so-aleatorio">Dígitos do 2º número
                     <select name="digitos2">
                         <?php for ($i = 1; $i <= 4; $i++): ?>
                             <option value="<?= $i ?>" <?= $cfg['digitos2'] === $i ? 'selected' : '' ?>>
@@ -327,7 +462,7 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
                     </select>
                 </label>
             </div>
-            <p class="obs">Na subtração o resultado nunca é negativo, e a divisão é sempre exata (sem resto).</p>
+            <p class="obs so-aleatorio">Na subtração o resultado nunca é negativo, e a divisão é sempre exata (sem resto).</p>
 
             <button type="submit" class="salvar">Salvar e começar</button>
         </form>

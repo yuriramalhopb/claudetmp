@@ -3,9 +3,12 @@
 Jogo em PHP para crianças treinarem contas com números aleatórios.
 
 - **Soma, subtração, multiplicação e divisão** — escolha quais aparecem.
-- **Quantos dígitos** tem o 1º e o 2º número (1 a 4).
+- **Dois modos de jogo:**
+  - 🎲 **Contas aleatórias:** escolha quantos dígitos tem o 1º e o 2º número (1 a 4).
+  - 📘 **Tabuada (1 a 10):** escolha uma ou várias tabuadas (do 1 ao 10), em ordem (×1 até ×10, com "3 de 10") ou misturada. Tem uma tabela "📖 Ver a tabuada" para consultar e um aviso ao terminar a tabuada.
 - **Quantas opções de resposta** (2 a 6).
 - Ao clicar numa opção, o sistema **verifica se está certa**, mostra a resposta correta e conta acertos, erros, acertos seguidos e recorde.
+- As opções erradas imitam erros comuns (ex.: 7 × 8 → 49 ou 64).
 - Subtração nunca dá negativo e divisão é sempre exata (sem resto).
 - Sem login e sem banco de dados (usa a sessão do PHP).
 
