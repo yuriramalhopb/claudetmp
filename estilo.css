@@ -159,3 +159,23 @@ button { font: inherit; cursor: pointer; }
 
 @keyframes pulo  { 50% { transform: scale(1.04); } }
 @keyframes treme { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+.instalar {
+    margin: 0 0 12px;
+    padding: 8px 18px;
+    font-weight: bold;
+    color: var(--primaria);
+    background: var(--cartao);
+    border: 2px solid var(--primaria);
+    border-radius: 999px;
+}
+.instalar[hidden], .dica-ios[hidden] { display: none; }
+.dica-ios {
+    margin: 0 auto 12px;
+    max-width: 420px;
+    padding: 10px 14px;
+    background: var(--cartao);
+    border: 2px dashed var(--primaria);
+    border-radius: 12px;
+}
+a.proxima { display: inline-block; text-decoration: none; }

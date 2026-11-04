@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#6c5ce7"/>
+  <g transform="translate(256 256) scale(1) translate(-256 -256)" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="150" text-anchor="middle" fill="#fff">
+    <circle cx="166" cy="166" r="80" fill="#ff8a00"/>
+    <circle cx="346" cy="166" r="80" fill="#22a85a"/>
+    <circle cx="166" cy="346" r="80" fill="#e5484d"/>
+    <circle cx="346" cy="346" r="80" fill="#00a8e8"/>
+    <text x="166" y="218">+</text>
+    <text x="346" y="214">−</text>
+    <text x="166" y="398">×</text>
+    <text x="346" y="398">÷</text>
+  </g>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "name": "Tabuada Divertida",
+  "short_name": "Tabuada",
+  "description": "Jogo de contas de soma, subtração, multiplicação e divisão para crianças.",
+  "lang": "pt-BR",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff7e6",
+  "theme_color": "#6c5ce7",
+  "categories": ["education", "kids", "games"],
+  "icons": [
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icones/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

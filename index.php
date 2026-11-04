@@ -203,13 +203,29 @@ $aproveitamento = $total > 0 ? (int) round($placar['acertos'] * 100 / $total) : 
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#6c5ce7">
+<meta name="description" content="Jogo de contas de soma, subtração, multiplicação e divisão para crianças.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tabuada">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Tabuada Divertida</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
+<link rel="icon" href="icones/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <link rel="stylesheet" href="estilo.css">
+<script src="app.js" defer></script>
 </head>
 <body>
 <main class="app">
     <header class="topo">
         <h1>🧮 Tabuada Divertida</h1>
+        <button type="button" id="instalar" class="instalar" hidden>📲 Instalar app</button>
+        <p id="dica-ios" class="dica-ios" hidden>
+            No iPhone/iPad (Safari): toque em <strong>Compartilhar</strong> (quadrado com seta ⬆️)
+            e depois em <strong>Adicionar à Tela de Início</strong>.
+        </p>
         <div class="placar">
             <span class="item certo" title="Acertos">✅ <?= e($placar['acertos']) ?></span>
             <span class="item errado" title="Erros">❌ <?= e($placar['erros']) ?></span>
