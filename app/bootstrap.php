@@ -24,7 +24,10 @@ spl_autoload_register(static function (string $class): void {
 
 require BASE_PATH . '/app/helpers.php';
 
-Env::load(BASE_PATH . '/.env');
+// nos testes automáticos a configuração vem só das variáveis de ambiente
+if (getenv('APP_ENV') !== 'testing') {
+    Env::load(BASE_PATH . '/.env');
+}
 $config = new Config(require BASE_PATH . '/app/config.php');
 
 date_default_timezone_set((string) $config->get('app.timezone', 'America/Sao_Paulo'));

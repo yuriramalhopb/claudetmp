@@ -15,7 +15,16 @@ Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependênc
 | **App no celular (PWA)** | Instalável no Android, iPhone e computador (ícone do pato na tela inicial, tela cheia, atalhos para Agenda/Calendário/Galeria/Conta), botão "Instalar app", instruções automáticas no iPhone, página `/instalar` e tela "sem sinal" quando estiver offline |
 | **Minha conta** | Editar perfil e foto, trocar senha, minhas trilhas, baixar meus dados, excluir conta (LGPD) |
 | **Cadastro de trilha** | Nome, categoria, nível, distância, organizador, início/término, cidade, estado (UF), local de encontro, valor, inscrições até, vagas (controla o "Eu vou!"), o que está incluso, Instagram do evento, link de inscrição, WhatsApp da organização, banner e descrição |
-| **Painel admin** | Dashboard, aprovar/bloquear/promover trilheiros, ficha completa, exportar CSV, CRUD de eventos (com banner) e aprovação de sugestões, álbuns e fotos, Instagram, mensagens de contato, log de auditoria |
+| **Painel admin** | Dashboard, aprovar/bloquear/promover trilheiros, ficha completa, exportar CSV, CRUD de eventos (com banner) e aprovação de sugestões, álbuns e fotos, Instagram, mensagens de contato, log de auditoria, página **Sistema** (cron, e-mails, notificações, backups) |
+| **Avisos automáticos** | E-mail (SMTP) e notificação no celular: cadastro aprovado, trilha nova, lembrete na véspera, pagamento confirmado, marcação em foto. Cada trilheiro escolhe o que recebe |
+| **Ficha de segurança** | Por trilha (só admin): telefone, moto, **tipo sanguíneo, contato de emergência**, termo aceito, pagamento e presença no dia. Versão para imprimir e planilha |
+| **Termo de responsabilidade** | Aceito no "Eu vou!" com data, hora, IP e versão do texto. Texto editável no painel |
+| **Pix** | Trilhas com inscrição paga geram QR Code e "copia e cola" para a chave Pix da turma; trilheiro envia comprovante (privado); admin confirma |
+| **Percurso (GPX)** | Upload do GPX do Wikiloc/Strava/Garmin: mapa, km, subida acumulada, perfil de elevação; download só para trilheiros |
+| **Fotos** | Curtidas, comentários e marcação de trilheiros (com notificação); "Aparece nas fotos" no perfil |
+| **Ranking e selos** | Ranking anual/geral (trilhas e km), selos no perfil (primeira trilha, 10 trilhas, 1.000 km, extremo, veterano…) |
+| **SEO** | sitemap.xml, robots.txt, dados estruturados de evento para o Google, Open Graph para compartilhar |
+| **App Android** | APK/AAB gerado a partir do site (TWA) — ver `android/README.md` |
 
 ## Segurança
 
@@ -28,6 +37,9 @@ Site completo em **PHP 8.1+ orientado a objetos**, sem frameworks nem dependênc
 - **Uploads:** tipo detectado pelo conteúdo (finfo + getimagesize), limite de tamanho e resolução, **imagem recodificada com GD** (remove EXIF/GPS e qualquer código embutido), nome aleatório, pasta sem execução de PHP.
 - **Recuperação de senha:** token aleatório de 256 bits, só o hash é salvo, validade de 60 min, uso único, resposta que não revela se o e-mail existe.
 - **Privacidade:** tipo sanguíneo, contato de emergência, e-mail e nascimento só para admins (acesso à ficha fica no log); telefone só para trilheiros logados e se o membro autorizar.
+- **Verificação em duas etapas (2FA):** obrigatória para administradores (Google Authenticator/Authy), opcional para trilheiros; segredo criptografado no banco, códigos de recuperação de uso único, proteção contra reutilização do código.
+- **Dados sensíveis:** comprovantes de pagamento e arquivos GPX ficam fora da pasta pública e só são entregues após checar permissão; ficha de segurança e comprovantes ficam registrados na auditoria.
+- **Notificações e e-mail:** push com criptografia ponta a ponta (padrão Web Push) e somente para os serviços oficiais dos navegadores; SMTP sempre com certificado verificado.
 - **Outros:** cabeçalhos HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy; proteção contra open redirect; CSV protegido contra injeção de fórmulas; SSRF bloqueado no download de imagens do Instagram (só domínios do Instagram via HTTPS); erros nunca exibidos em produção (vão para `storage/logs`); código fora da pasta pública.
 
 ## Instalação
@@ -84,6 +96,32 @@ php bin/seed-demo.php
 
 Sem token, ainda dá para adicionar qualquer post público pelo link no painel.
 
+## Depois de instalar (importante)
+
+1. **Agendador (cron)** — uma linha no painel da hospedagem, a cada 5 minutos. Sem ele, avisos, lembretes, notificações e backups automáticos não acontecem:
+   ```
+   */5 * * * * php /caminho/do/site/bin/cron.php >> /caminho/do/site/storage/logs/cron.log 2>&1
+   ```
+2. **E-mail** — no `.env`, `MAIL_DRIVER=smtp` e os dados `SMTP_*` (exemplos para Gmail, Hostinger e Outlook no `.env.example`). Teste em **Painel → Sistema → Enviar e-mail de teste**.
+3. **2FA** — no primeiro acesso ao painel, o admin configura o Google Authenticator e **guarda os códigos de recuperação**.
+4. **Pix** — preencha `PIX_KEY`, `PIX_NAME` e `PIX_CITY` no `.env` para cobrar inscrições.
+5. **Termo** — revise o texto em **Painel → Termo**.
+6. **Backup** — automático todo dia (`BACKUP_HOUR`), mantido por 30 dias em `storage/backups`. Copie de vez em quando para fora do servidor. Comandos:
+   ```bash
+   php bin/backup.php
+   ```
+   ```bash
+   php bin/restore.php
+   ```
+7. **Guarde o `.env`** em local seguro: a `APP_KEY` é necessária para o 2FA continuar funcionando.
+
+## Testes automáticos
+
+Os testes rodam no GitHub a cada envio (aba **Actions → Testes**). Para rodar no seu computador, use um banco **separado** cujo nome termina em `_test` (ele é apagado e recriado):
+```bash
+TEST_DB_USER=root TEST_DB_PASS=senha php tests/run.php
+```
+
 ## App no celular (PWA)
 
 O site já é um aplicativo instalável — não precisa de Play Store/App Store.
@@ -106,7 +144,9 @@ app/
   Controllers/   públicos + Admin/
   Views/         templates PHP (layouts, partials, páginas, admin)
   routes.php     todas as rotas e middlewares (guest, auth, approved, admin)
-bin/             install, instagram-sync, seed-demo
+bin/             install, cron, backup, restore, instagram-sync, seed-demo
+tests/           testes unitários e de ponta a ponta (php tests/run.php)
+android/         geração do app Android (APK/AAB)
 database/        schema.sql + migrations/ (MySQL/MariaDB, utf8mb4)
 public/          index.php (front controller), assets, uploads
 storage/         sessões e logs (fora da web)
