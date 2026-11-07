@@ -61,6 +61,8 @@ return [
     'android' => [
         'package' => (string) Env::get('ANDROID_PACKAGE', ''),
         'sha256' => (string) Env::get('ANDROID_SHA256_FINGERPRINTS', ''),
+        'apk_url' => (string) Env::get('ANDROID_APK_URL', ''),
+        'play_url' => (string) Env::get('ANDROID_PLAY_URL', ''),
     ],
     'security' => [
         'session_idle_minutes' => (int) Env::get('SESSION_IDLE_MINUTES', 120),

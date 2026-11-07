@@ -5,7 +5,7 @@ DirectoryIndex index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
     # Bloqueia arquivos ocultos (.env, .git...)
-    RewriteRule (^|/)\. - [F,L]
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [QSA,L]
 </IfModule>

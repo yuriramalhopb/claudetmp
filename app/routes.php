@@ -43,6 +43,7 @@ $r->get('/trilheiros/{id}', [MemberController::class, 'show']);
 $r->get('/ranking', [App\Controllers\RankingController::class, 'index']);
 $r->get('/sitemap.xml', [App\Controllers\SeoController::class, 'sitemap']);
 $r->get('/robots.txt', [App\Controllers\SeoController::class, 'robots']);
+$r->get('/.well-known/assetlinks.json', [App\Controllers\AndroidController::class, 'assetLinks']);
 
 $r->get('/contato', [ContactController::class, 'form']);
 $r->post('/contato', [ContactController::class, 'send']);

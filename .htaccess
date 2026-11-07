@@ -3,7 +3,7 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^(app|bin|database|storage|vendor)(/|$) - [F,L]
-    RewriteRule (^|/)\. - [F,L]
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
     RewriteRule ^$ public/ [L]
     RewriteRule ^((?!public/).*)$ public/$1 [L,NC]
 </IfModule>

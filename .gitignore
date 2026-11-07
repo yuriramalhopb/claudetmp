@@ -11,3 +11,6 @@
 /storage/cron.lock
 /storage/private/**/*
 !/storage/private/**/.gitkeep
+/android/build/
+*.keystore
+*.jks

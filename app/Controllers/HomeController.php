@@ -51,7 +51,13 @@ final class HomeController extends Controller
 
     public function install(Request $request): Response
     {
-        return $this->view('pages/install', ['title' => 'Instalar o app']);
+        $apk = (string) $this->app->config->get('android.apk_url', '');
+        $play = (string) $this->app->config->get('android.play_url', '');
+        return $this->view('pages/install', [
+            'title' => 'Instalar o app',
+            'apkUrl' => preg_match('#^https://#', $apk) ? $apk : '',
+            'playUrl' => preg_match('#^https://play\.google\.com/#', $play) ? $play : '',
+        ]);
     }
 
     public function privacy(Request $request): Response

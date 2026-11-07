@@ -484,3 +484,4 @@ textarea { resize: vertical; }
 .badges li { display: flex; align-items: center; gap: .4rem; padding: .35rem .75rem; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: .88rem; font-weight: 600; }
 .badges li span { font-size: 1.15rem; }
 @media (max-width: 560px) { .podium { grid-template-columns: 1fr; } .podium-item.p1 { order: -1; } }
+.center-actions { justify-content: center; }

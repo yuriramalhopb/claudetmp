@@ -4,7 +4,11 @@
         <h1>App Ducks Offroad</h1>
         <p class="lead">Instale o site como aplicativo no seu celular: ícone na tela inicial, abre em tela cheia e carrega mais rápido. Grátis e sem loja de aplicativos.</p>
         <p class="notice notice-success" data-installed-msg hidden>✅ Você já está usando o app instalado!</p>
-        <button class="btn btn-primary btn-lg" type="button" data-install hidden>📲 Instalar agora</button>
+        <div class="actions center-actions">
+            <button class="btn btn-primary btn-lg" type="button" data-install hidden>📲 Instalar agora</button>
+            <?php if ($playUrl): ?><a class="btn btn-lg" href="<?= e($playUrl) ?>" target="_blank" rel="noopener noreferrer">▶ Baixar na Google Play</a><?php endif; ?>
+            <?php if ($apkUrl): ?><a class="btn btn-lg btn-ghost" href="<?= e($apkUrl) ?>" rel="noopener noreferrer">⬇ Baixar APK (Android)</a><?php endif; ?>
+        </div>
     </div>
 </section>
 <section class="section">
