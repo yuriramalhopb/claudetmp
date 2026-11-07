@@ -31,6 +31,7 @@
                 <?php if ($ev['status'] === 'pending'): ?>
                     <form method="post" action="/admin/eventos/<?= (int) $ev['id'] ?>/aprovar" class="inline-form"><?= $csrf->field() ?><button class="btn btn-sm btn-primary" type="submit">Aprovar</button></form>
                 <?php else: ?>
+                    <a class="btn btn-sm" href="/admin/eventos/<?= (int) $ev['id'] ?>/ficha">📋 Ficha</a>
                     <a class="btn btn-sm btn-ghost" href="/agenda/<?= (int) $ev['id'] ?>" target="_blank">Ver</a>
                 <?php endif; ?>
                 <form method="post" action="/admin/eventos/<?= (int) $ev['id'] ?>/excluir" class="inline-form" data-confirm="Excluir este evento?"><?= $csrf->field() ?><button class="btn btn-sm btn-danger" type="submit">Excluir</button></form>

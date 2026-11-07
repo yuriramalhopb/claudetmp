@@ -70,6 +70,7 @@ $r->group('/minha-conta', ['auth'], function (Router $r): void {
 });
 
 $r->post('/agenda/{id}/presenca', [EventController::class, 'rsvp'], ['auth', 'approved']);
+$r->post('/agenda/{id}/pagamento', [EventController::class, 'informPayment'], ['auth', 'approved']);
 $r->get('/agenda/sugerir', [EventController::class, 'suggestForm'], ['auth', 'approved']);
 $r->post('/agenda/sugerir', [EventController::class, 'suggest'], ['auth', 'approved']);
 $r->get('/galeria/enviar', [GalleryController::class, 'uploadForm'], ['auth', 'approved']);
@@ -99,6 +100,13 @@ $r->group('/admin', ['auth', 'admin'], function (Router $r): void {
     $r->post('/eventos/{id}/editar', [Admin\EventController::class, 'update']);
     $r->post('/eventos/{id}/aprovar', [Admin\EventController::class, 'approve']);
     $r->post('/eventos/{id}/excluir', [Admin\EventController::class, 'destroy']);
+    $r->get('/eventos/{id}/ficha', [Admin\EventController::class, 'sheet']);
+    $r->get('/eventos/{id}/ficha.csv', [Admin\EventController::class, 'sheetCsv']);
+    $r->post('/eventos/{id}/presenca/{uid}', [Admin\EventController::class, 'attendance']);
+    $r->post('/eventos/{id}/pagamento/{uid}', [Admin\EventController::class, 'payment']);
+    $r->get('/comprovantes/{file}', [Admin\EventController::class, 'receipt']);
+    $r->get('/termo', [Admin\EventController::class, 'waiverForm']);
+    $r->post('/termo', [Admin\EventController::class, 'waiverUpdate']);
 
     $r->get('/galeria', [Admin\GalleryController::class, 'index']);
     $r->post('/galeria/albuns', [Admin\GalleryController::class, 'storeAlbum']);

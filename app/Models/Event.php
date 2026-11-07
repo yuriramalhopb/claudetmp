@@ -33,8 +33,10 @@ final class Event extends Model
     public const FIELDS = [
         'title', 'description', 'start_at', 'end_at', 'location', 'city', 'state', 'organizer', 'category',
         'level', 'distance_km', 'price', 'external_link', 'instagram_url', 'whatsapp', 'capacity', 'includes',
-        'registration_until',
+        'registration_until', 'pix_amount',
     ];
+
+    public const PAYMENT = ['none' => '—', 'pending' => 'Aguardando pagamento', 'informed' => 'Pagamento informado', 'paid' => 'Pago'];
 
     /**
      * Trilhas de um ano, com filtros. Usado na página "Trilhas do ano".
@@ -154,10 +156,11 @@ final class Event extends Model
         );
     }
 
-    public function create(array $data, bool $isOwn, string $status, ?int $userId, ?string $cover): int
+    public function create(array $data, bool $isOwn, string $status, ?int $userId, ?string $cover, bool $requiresWaiver = true): int
     {
         $row = $this->normalize($data);
         $row += [
+            'requires_waiver' => $requiresWaiver ? 1 : 0,
             'is_own' => $isOwn ? 1 : 0,
             'status' => $status,
             'created_by' => $userId,
@@ -167,10 +170,11 @@ final class Event extends Model
         return $this->db->insert('events', $row);
     }
 
-    public function updateEvent(int $id, array $data, bool $isOwn, ?string $cover): void
+    public function updateEvent(int $id, array $data, bool $isOwn, ?string $cover, bool $requiresWaiver = true): void
     {
         $row = $this->normalize($data);
         $row['is_own'] = $isOwn ? 1 : 0;
+        $row['requires_waiver'] = $requiresWaiver ? 1 : 0;
         $row['updated_at'] = self::now();
         if ($cover !== null) {
             $row['cover'] = $cover;
@@ -199,18 +203,88 @@ final class Event extends Model
         $row['distance_km'] = isset($row['distance_km']) ? (int) $row['distance_km'] : null;
         $row['capacity'] = isset($row['capacity']) ? (int) $row['capacity'] : null;
         $row['state'] = isset($row['state']) ? mb_strtoupper($row['state']) : null;
+        $row['pix_amount'] = isset($row['pix_amount']) ? round((float) str_replace(',', '.', (string) $row['pix_amount']), 2) : null;
         return $row;
     }
 
     // ---- Presença (RSVP) ----
+    /** Confirma presença registrando o aceite do termo e, se houver valor, o pagamento pendente. */
+    public function confirmRsvp(int $eventId, int $userId, ?string $waiverHash, string $ip, bool $paid): void
+    {
+        $this->db->insert('event_rsvps', [
+            'event_id' => $eventId,
+            'user_id' => $userId,
+            'created_at' => self::now(),
+            'waiver_accepted_at' => $waiverHash ? self::now() : null,
+            'waiver_hash' => $waiverHash,
+            'waiver_ip' => $waiverHash ? mb_substr($ip, 0, 45) : null,
+            'payment_status' => $paid ? 'pending' : 'none',
+        ]);
+    }
+
+    public function cancelRsvp(int $eventId, int $userId): void
+    {
+        $this->db->execute('DELETE FROM event_rsvps WHERE event_id = ? AND user_id = ?', [$eventId, $userId]);
+    }
+
+    /** Compatibilidade: alterna presença (sem termo/pagamento). */
     public function toggleRsvp(int $eventId, int $userId): bool
     {
         if ($this->isGoing($eventId, $userId)) {
-            $this->db->execute('DELETE FROM event_rsvps WHERE event_id = ? AND user_id = ?', [$eventId, $userId]);
+            $this->cancelRsvp($eventId, $userId);
             return false;
         }
-        $this->db->insert('event_rsvps', ['event_id' => $eventId, 'user_id' => $userId, 'created_at' => self::now()]);
+        $this->confirmRsvp($eventId, $userId, null, '', false);
         return true;
+    }
+
+    public function rsvp(int $eventId, int $userId): ?array
+    {
+        return $this->db->fetch('SELECT * FROM event_rsvps WHERE event_id = ? AND user_id = ?', [$eventId, $userId]);
+    }
+
+    /** Ficha de segurança: todos os confirmados com dados de emergência (somente admin). */
+    public function safetySheet(int $eventId): array
+    {
+        return $this->db->fetchAll(
+            "SELECT u.id, u.name, u.nickname, u.email, u.phone, u.city, u.birth_date, u.bike_brand, u.bike_model, u.bike_cc,
+                    u.experience, u.blood_type, u.emergency_name, u.emergency_phone, u.photo,
+                    r.created_at AS confirmed_at, r.waiver_accepted_at, r.waiver_hash, r.waiver_ip, r.attended,
+                    r.payment_status, r.payment_receipt, r.payment_informed_at, r.paid_at
+             FROM event_rsvps r JOIN users u ON u.id = r.user_id
+             WHERE r.event_id = ? ORDER BY COALESCE(u.nickname, u.name)",
+            [$eventId]
+        );
+    }
+
+    public function setAttended(int $eventId, int $userId, ?bool $attended): void
+    {
+        $this->db->execute('UPDATE event_rsvps SET attended = ? WHERE event_id = ? AND user_id = ?', [$attended === null ? null : (int) $attended, $eventId, $userId]);
+    }
+
+    public function informPayment(int $eventId, int $userId, ?string $receipt): void
+    {
+        $this->db->execute(
+            "UPDATE event_rsvps SET payment_status = 'informed', payment_informed_at = ?, payment_receipt = COALESCE(?, payment_receipt)
+             WHERE event_id = ? AND user_id = ? AND payment_status IN ('pending', 'informed')",
+            [self::now(), $receipt, $eventId, $userId]
+        );
+    }
+
+    public function setPayment(int $eventId, int $userId, string $status, ?int $adminId): void
+    {
+        if (!isset(self::PAYMENT[$status])) {
+            return;
+        }
+        $this->db->execute(
+            'UPDATE event_rsvps SET payment_status = ?, paid_at = ?, paid_by = ? WHERE event_id = ? AND user_id = ?',
+            [$status, $status === 'paid' ? self::now() : null, $status === 'paid' ? $adminId : null, $eventId, $userId]
+        );
+    }
+
+    public function receiptFiles(int $eventId): array
+    {
+        return array_column($this->db->fetchAll('SELECT payment_receipt FROM event_rsvps WHERE event_id = ? AND payment_receipt IS NOT NULL', [$eventId]), 'payment_receipt');
     }
 
     public function isGoing(int $eventId, int $userId): bool

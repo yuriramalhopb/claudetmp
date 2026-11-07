@@ -79,6 +79,16 @@ $v = fn (string $k) => old($old, $k, $ev[$k] ?? '');
             <?= field_error($errors, 'capacity') ?>
         </label>
     </div>
+    <div class="grid-2">
+        <label>Inscrição paga via Pix (R$)
+            <input type="text" name="pix_amount" inputmode="decimal" maxlength="9" placeholder="Ex.: 80,00 — vazio = sem cobrança pelo site" value="<?= e(old($old, 'pix_amount', isset($ev['pix_amount']) && $ev['pix_amount'] !== null ? number_format((float) $ev['pix_amount'], 2, ',', '') : '')) ?>">
+            <small class="hint">Gera QR Code Pix para quem confirmar presença. Configure PIX_KEY no .env.</small>
+            <?= field_error($errors, 'pix_amount') ?>
+        </label>
+        <?php if (!empty($showWaiverToggle)): ?>
+        <label class="check check-inline"><input type="checkbox" name="requires_waiver" value="1"<?= checked(old($old, 'requires_waiver', $ev['requires_waiver'] ?? 1)) ?>> Exigir aceite do termo de responsabilidade</label>
+        <?php endif; ?>
+    </div>
     <label>O que está incluso
         <textarea name="includes" rows="2" maxlength="2000" placeholder="Ex.: café da manhã, almoço, camiseta, seguro, resgate"><?= e($v('includes')) ?></textarea>
         <?= field_error($errors, 'includes') ?>

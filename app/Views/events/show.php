@@ -69,12 +69,55 @@ $full = !empty($event['capacity']) && count($attendees) >= (int) $event['capacit
             <h3>Quem vai 🏍️</h3>
             <?php if (!$past): ?>
                 <?php if ($auth->isApproved()): ?>
-                    <?php if ($full && !$going): ?>
+                    <?php if ($going): ?>
+                        <p class="notice notice-success">✅ Você confirmou presença<?= $myRsvp && $myRsvp['waiver_accepted_at'] ? ' e aceitou o termo em ' . e(date('d/m/Y H:i', strtotime($myRsvp['waiver_accepted_at']))) : '' ?>.</p>
+                        <?php if ($myRsvp && $myRsvp['payment_status'] !== 'none'): ?>
+                            <div class="payment-box" id="pagamento">
+                                <h4>Inscrição: R$ <?= e(number_format((float) $event['pix_amount'], 2, ',', '.')) ?></h4>
+                                <?php if ($myRsvp['payment_status'] === 'paid'): ?>
+                                    <p class="notice notice-success">💚 Pagamento confirmado pela organização.</p>
+                                <?php else: ?>
+                                    <?php if ($myRsvp['payment_status'] === 'informed'): ?>
+                                        <p class="notice notice-warning">⏳ Pagamento informado em <?= e(date('d/m H:i', strtotime($myRsvp['payment_informed_at']))) ?>. Aguardando conferência.</p>
+                                    <?php endif; ?>
+                                    <?php if ($pixPayload): ?>
+                                        <p class="muted">Pague com Pix: escaneie o QR Code ou use o "copia e cola".</p>
+                                        <div class="qr-box" data-qr="<?= e($pixPayload) ?>" data-qr-alt="QR Code Pix" data-qr-size="200" data-qr-cell="5">QR Code…</div>
+                                        <textarea id="pix-code" class="pix-code" readonly rows="3"><?= e($pixPayload) ?></textarea>
+                                        <button class="btn btn-block" type="button" data-copy="#pix-code">📋 Copiar Pix copia e cola</button>
+                                    <?php else: ?>
+                                        <p class="hint">A chave Pix ainda não foi configurada. Fale com a organização para pagar.</p>
+                                    <?php endif; ?>
+                                    <form class="form" method="post" action="/agenda/<?= (int) $event['id'] ?>/pagamento" enctype="multipart/form-data">
+                                        <?= $csrf->field() ?>
+                                        <label>Comprovante (opcional)
+                                            <input type="file" name="receipt" accept="image/jpeg,image/png,image/webp">
+                                        </label>
+                                        <button class="btn btn-primary btn-block" type="submit">Já paguei</button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                        <form method="post" action="/agenda/<?= (int) $event['id'] ?>/presenca" data-confirm="Cancelar sua presença nesta trilha?">
+                            <?= $csrf->field() ?>
+                            <button class="btn btn-ghost btn-block" type="submit">Cancelar minha presença</button>
+                        </form>
+                    <?php elseif ($full): ?>
                         <p class="hint">Vagas esgotadas.</p>
+                    <?php elseif ($regClosed): ?>
+                        <p class="hint">Inscrições encerradas.</p>
                     <?php else: ?>
-                    <form method="post" action="/agenda/<?= (int) $event['id'] ?>/presenca">
+                    <form method="post" action="/agenda/<?= (int) $event['id'] ?>/presenca" id="termo">
                         <?= $csrf->field() ?>
-                        <button class="btn <?= $going ? 'btn-ghost' : 'btn-primary' ?> btn-block" type="submit"><?= $going ? 'Cancelar minha presença' : 'Eu vou!' ?></button>
+                        <?php if ((int) $event['requires_waiver'] === 1): ?>
+                            <details class="waiver">
+                                <summary>📄 Ler o termo de responsabilidade</summary>
+                                <div class="waiver-text"><?= nl2br_e($waiverText) ?></div>
+                            </details>
+                            <label class="check"><input type="checkbox" name="waiver" value="1" required> Li e aceito o termo de responsabilidade</label>
+                        <?php endif; ?>
+                        <?php if ((float) $event['pix_amount'] > 0): ?><p class="hint">Inscrição: <strong>R$ <?= e(number_format((float) $event['pix_amount'], 2, ',', '.')) ?></strong> via Pix (na próxima etapa).</p><?php endif; ?>
+                        <button class="btn btn-primary btn-block" type="submit">Eu vou!</button>
                     </form>
                     <?php endif; ?>
                 <?php elseif ($auth->check()): ?>

@@ -25,7 +25,7 @@ final class Validator
         'lgpd' => 'termo de privacidade', 'current_password' => 'senha atual', 'album_id' => 'álbum',
         'role' => 'perfil', 'state' => 'estado', 'category' => 'categoria', 'instagram_url' => 'Instagram do evento',
         'whatsapp' => 'WhatsApp', 'capacity' => 'vagas', 'includes' => 'o que está incluso',
-        'registration_until' => 'inscrições até', 'status' => 'situação', 'access_token' => 'token', 'username' => 'usuário',
+        'registration_until' => 'inscrições até', 'pix_amount' => 'valor da inscrição (Pix)', 'waiver_text' => 'termo', 'status' => 'situação', 'access_token' => 'token', 'username' => 'usuário',
     ];
 
     public function __construct(private readonly array $data)

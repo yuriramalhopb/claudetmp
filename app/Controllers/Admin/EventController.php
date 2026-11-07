@@ -36,7 +36,7 @@ final class EventController extends Controller
             return $this->failWith($errors, $data, '/admin/eventos/novo');
         }
         $cover = $this->storeCover($request);
-        $id = $this->app->model(Event::class)->create($data, $request->bool('is_own'), 'approved', $this->auth->id(), $cover);
+        $id = $this->app->model(Event::class)->create($data, $request->bool('is_own'), 'approved', $this->auth->id(), $cover, $request->bool('requires_waiver'));
         $this->app->audit('criar_evento', "#{$id} {$data['title']}");
         $this->flash('success', 'Evento criado.');
         return $this->redirect('/admin/eventos');
@@ -67,7 +67,7 @@ final class EventController extends Controller
                 $events->removeCover((int) $event['id']);
             }
         }
-        $events->updateEvent((int) $event['id'], $data, $request->bool('is_own'), $cover);
+        $events->updateEvent((int) $event['id'], $data, $request->bool('is_own'), $cover, $request->bool('requires_waiver'));
         $this->app->audit('editar_evento', '#' . $event['id']);
         $this->flash('success', 'Evento atualizado.');
         return $this->redirect('/admin/eventos');
@@ -87,10 +87,118 @@ final class EventController extends Controller
         $events = $this->app->model(Event::class);
         $event = $this->notFoundIfNull($events->find($this->idParam($request)));
         $this->app->uploader()->delete('events', $event['cover']);
+        foreach ($events->receiptFiles((int) $event['id']) as $receipt) {
+            $this->app->privateUploader()->delete('receipts', $receipt);
+        }
         $events->delete((int) $event['id']);
         $this->app->audit('excluir_evento', '#' . $event['id'] . ' ' . $event['title']);
         $this->flash('success', 'Evento excluído.');
         return $this->redirect('/admin/eventos');
+    }
+
+    // ---------- Ficha de segurança / presença / pagamentos ----------
+    public function sheet(Request $request): Response
+    {
+        $event = $this->notFoundIfNull($this->app->model(Event::class)->find($this->idParam($request)));
+        $rows = $this->app->model(Event::class)->safetySheet((int) $event['id']);
+        $this->app->audit('ver_ficha_seguranca', 'Evento #' . $event['id']);
+        $paid = array_filter($rows, fn ($r) => $r['payment_status'] === 'paid');
+        return $this->adminView('events/sheet', [
+            'title' => 'Ficha: ' . $event['title'],
+            'event' => $event,
+            'rows' => $rows,
+            'waiverHash' => $this->app->waiver()->hash(),
+            'totals' => [
+                'confirmed' => count($rows),
+                'attended' => count(array_filter($rows, fn ($r) => (string) $r['attended'] === '1')),
+                'paid' => count($paid),
+                'informed' => count(array_filter($rows, fn ($r) => $r['payment_status'] === 'informed')),
+                'amount' => count($paid) * (float) $event['pix_amount'],
+            ],
+        ]);
+    }
+
+    public function sheetCsv(Request $request): Response
+    {
+        $event = $this->notFoundIfNull($this->app->model(Event::class)->find($this->idParam($request)));
+        $rows = $this->app->model(Event::class)->safetySheet((int) $event['id']);
+        $fh = fopen('php://temp', 'r+');
+        fwrite($fh, "\xEF\xBB\xBF");
+        $cols = ['Nome', 'Apelido', 'Telefone', 'Moto', 'Tipo sanguíneo', 'Contato de emergência', 'Telefone de emergência', 'Termo aceito em', 'Pagamento', 'Compareceu'];
+        fputcsv($fh, $cols, ';');
+        foreach ($rows as $r) {
+            $line = [$r['name'], $r['nickname'], $r['phone'], trim($r['bike_brand'] . ' ' . $r['bike_model']), $r['blood_type'], $r['emergency_name'],
+                $r['emergency_phone'], $r['waiver_accepted_at'], Event::PAYMENT[$r['payment_status']] ?? '', $r['attended'] === null ? '' : ((int) $r['attended'] ? 'sim' : 'não')];
+            fputcsv($fh, array_map(fn ($v) => ($v !== null && $v !== '' && in_array(((string) $v)[0], ['=', '+', '-', '@'], true)) ? "'" . $v : (string) $v, $line), ';');
+        }
+        rewind($fh);
+        $csv = (string) stream_get_contents($fh);
+        fclose($fh);
+        $this->app->audit('exportar_ficha', 'Evento #' . $event['id']);
+        return Response::download($csv, 'ficha-trilha-' . (int) $event['id'] . '.csv', 'text/csv; charset=UTF-8');
+    }
+
+    public function attendance(Request $request): Response
+    {
+        $eventId = $this->idParam($request);
+        $userId = (int) $request->param('uid');
+        $value = $request->input('attended');
+        $this->app->model(Event::class)->setAttended($eventId, $userId, $value === '' ? null : $value === '1');
+        return $this->redirect('/admin/eventos/' . $eventId . '/ficha#u' . $userId);
+    }
+
+    public function payment(Request $request): Response
+    {
+        $events = $this->app->model(Event::class);
+        $event = $this->notFoundIfNull($events->find($this->idParam($request)));
+        $userId = (int) $request->param('uid');
+        $status = $request->input('status');
+        $rsvp = $events->rsvp((int) $event['id'], $userId);
+        if ($rsvp === null || !in_array($status, ['pending', 'paid'], true)) {
+            throw new \App\Core\HttpException(400);
+        }
+        $events->setPayment((int) $event['id'], $userId, $status, $this->auth->id());
+        $this->app->audit('pagamento_' . $status, "Evento #{$event['id']} trilheiro #{$userId}");
+        if ($status === 'paid' && $rsvp['payment_status'] !== 'paid' && ($user = $this->app->model(\App\Models\User::class)->find($userId))) {
+            $this->app->notifier()->paymentConfirmed($user, $event);
+        }
+        $this->flash('success', $status === 'paid' ? 'Pagamento confirmado.' : 'Pagamento marcado como pendente.');
+        return $this->redirect('/admin/eventos/' . $event['id'] . '/ficha#u' . $userId);
+    }
+
+    /** Exibe um comprovante (arquivo privado, fora da pasta pública). */
+    public function receipt(Request $request): Response
+    {
+        $file = (string) $request->param('file');
+        if (!preg_match('/^[a-f0-9]{32}$/', $file)) {
+            throw new \App\Core\HttpException(404);
+        }
+        $path = $this->app->basePath . '/storage/private/receipts/' . $file . '.jpg';
+        if (!is_file($path)) {
+            throw new \App\Core\HttpException(404);
+        }
+        $this->app->audit('ver_comprovante', $file);
+        return (new Response((string) file_get_contents($path), 200, ['Content-Type' => 'image/jpeg']))
+            ->withHeader('Cache-Control', 'private, no-store')
+            ->withHeader('Content-Disposition', 'inline; filename="comprovante.jpg"');
+    }
+
+    // ---------- Termo de responsabilidade ----------
+    public function waiverForm(Request $request): Response
+    {
+        return $this->adminView('waiver', ['title' => 'Termo de responsabilidade', 'text' => $this->app->waiver()->text()]);
+    }
+
+    public function waiverUpdate(Request $request): Response
+    {
+        $text = str_replace("\r\n", "\n", $request->input('waiver_text'));
+        if ($fail = $this->validate(['waiver_text' => $text], ['waiver_text' => 'required|min:50|max:10000'], '/admin/termo')) {
+            return $fail;
+        }
+        $this->app->waiver()->update($text);
+        $this->app->audit('termo_atualizado', substr(hash('sha256', $text), 0, 12));
+        $this->flash('success', 'Termo atualizado. Novas confirmações usarão o novo texto; os aceites antigos continuam registrados com a versão anterior.');
+        return $this->redirect('/admin/termo');
     }
 
     private function storeCover(Request $request): ?string

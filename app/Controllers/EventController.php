@@ -33,6 +33,7 @@ final class EventController extends Controller
             'capacity' => 'between:1,100000',
             'includes' => 'max:2000',
             'registration_until' => 'date',
+            'pix_amount' => 'regex:/^\d{1,6}([.,]\d{1,2})?$/',
         ];
     }
 
@@ -140,6 +141,11 @@ final class EventController extends Controller
             'event' => $event,
             'attendees' => $events->attendees((int) $event['id']),
             'going' => $userId ? $events->isGoing((int) $event['id'], $userId) : false,
+            'myRsvp' => $userId ? $events->rsvp((int) $event['id'], $userId) : null,
+            'waiverText' => $this->app->waiver()->text(),
+            'pixPayload' => $this->pixPayloadFor($event, $userId),
+            'scripts' => ['vendor/qrcode.js', 'js/qr.js', 'vendor/leaflet/leaflet.js', 'js/map.js'],
+            'styles' => ['vendor/leaflet/leaflet.css'],
             'googleLink' => $this->calendar()->googleLink($event),
             'mapsLink' => Calendar::mapsLink($event),
             'shareUrl' => $this->app->config->get('app.url') . '/agenda/' . (int) $event['id'],
@@ -172,9 +178,85 @@ final class EventController extends Controller
             $this->flash('error', 'As vagas deste evento estão esgotadas.');
             return $this->redirect('/agenda/' . (int) $event['id']);
         }
-        $going = $events->toggleRsvp((int) $event['id'], $userId);
-        $this->flash('success', $going ? 'Presença confirmada! Bora pro barro! 🏍️' : 'Presença cancelada.');
-        return $this->redirect('/agenda/' . (int) $event['id']);
+        $eventId = (int) $event['id'];
+        $current = $events->rsvp($eventId, $userId);
+
+        if ($current !== null) {
+            if ($current['payment_status'] === 'paid') {
+                $this->flash('warning', 'Seu pagamento já foi confirmado. Para cancelar, fale com a organização (reembolso).');
+                return $this->redirect('/agenda/' . $eventId);
+            }
+            $events->cancelRsvp($eventId, $userId);
+            if ($current['payment_receipt']) {
+                $this->app->privateUploader()->delete('receipts', $current['payment_receipt']);
+            }
+            $this->flash('success', 'Presença cancelada.');
+            return $this->redirect('/agenda/' . $eventId);
+        }
+
+        $waiverHash = null;
+        if ((int) $event['requires_waiver'] === 1) {
+            if (!$request->bool('waiver')) {
+                $this->flash('error', 'Para confirmar presença, leia e aceite o termo de responsabilidade.');
+                return $this->redirect('/agenda/' . $eventId . '#termo');
+            }
+            $waiverHash = $this->app->waiver()->hash();
+        }
+        if (!empty($event['registration_until']) && strtotime($event['registration_until'] . ' 23:59:59') < time()) {
+            $this->flash('error', 'As inscrições para este evento estão encerradas.');
+            return $this->redirect('/agenda/' . $eventId);
+        }
+        $paid = (float) $event['pix_amount'] > 0;
+        try {
+            $events->confirmRsvp($eventId, $userId, $waiverHash, $request->ip(), $paid);
+        } catch (\PDOException $e) {
+            // clique duplo: a presença já existe
+        }
+        $this->flash('success', $paid
+            ? 'Presença registrada! Agora finalize a inscrição pagando com Pix abaixo. 🏍️'
+            : 'Presença confirmada! Bora pro barro! 🏍️');
+        return $this->redirect('/agenda/' . $eventId . ($paid ? '#pagamento' : ''));
+    }
+
+    /** Trilheiro informa que pagou (com comprovante opcional, guardado fora da área pública). */
+    public function informPayment(Request $request): Response
+    {
+        $events = $this->app->model(Event::class);
+        $event = $events->findApproved($this->idParam($request));
+        $userId = (int) $this->auth->id();
+        $rsvp = $event ? $events->rsvp((int) $event['id'], $userId) : null;
+        if ($event === null || $rsvp === null || !in_array($rsvp['payment_status'], ['pending', 'informed'], true)) {
+            throw new HttpException(404);
+        }
+        $this->throttle('pay-inform', 10, 3600);
+        $receipt = null;
+        if ($file = $request->file('receipt')) {
+            try {
+                $receipt = $this->app->privateUploader()->store($file, 'receipts', 1600);
+                if ($rsvp['payment_receipt']) {
+                    $this->app->privateUploader()->delete('receipts', $rsvp['payment_receipt']);
+                }
+            } catch (\RuntimeException $e) {
+                $this->flash('error', 'Comprovante: ' . $e->getMessage());
+                return $this->redirect('/agenda/' . (int) $event['id'] . '#pagamento');
+            }
+        }
+        $events->informPayment((int) $event['id'], $userId, $receipt);
+        $this->flash('success', 'Obrigado! A organização vai conferir o pagamento e confirmar.');
+        return $this->redirect('/agenda/' . (int) $event['id'] . '#pagamento');
+    }
+
+    private function pixPayloadFor(array $event, ?int $userId): ?string
+    {
+        if (!$userId || (float) $event['pix_amount'] <= 0) {
+            return null;
+        }
+        $rsvp = $this->app->model(Event::class)->rsvp((int) $event['id'], $userId);
+        $pix = $this->app->pix();
+        if ($rsvp === null || $rsvp['payment_status'] === 'paid' || !$pix->isConfigured()) {
+            return null;
+        }
+        return $pix->payload((float) $event['pix_amount'], 'DUCKSE' . $event['id'] . 'U' . $userId, mb_substr($event['title'], 0, 30));
     }
 
     public function suggestForm(Request $request): Response

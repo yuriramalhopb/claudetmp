@@ -13,12 +13,13 @@
 </head>
 <body class="admin">
 <div class="admin-shell">
-    <aside class="admin-side">
+    <aside class="admin-side no-print">
         <a class="brand" href="/admin"><img src="/assets/img/logo.svg" alt="" width="36" height="36"><span>Painel</span></a>
         <nav>
             <a class="<?= $currentPath === '/admin' ? 'is-active' : '' ?>" href="/admin">📊 Visão geral</a>
             <a class="<?= active($currentPath, '/admin/trilheiros') ?>" href="/admin/trilheiros">🏍️ Trilheiros</a>
             <a class="<?= active($currentPath, '/admin/eventos') ?>" href="/admin/eventos">📅 Eventos</a>
+            <a class="<?= active($currentPath, '/admin/termo') ?>" href="/admin/termo">📄 Termo</a>
             <a class="<?= active($currentPath, '/admin/galeria') ?>" href="/admin/galeria">🖼️ Galeria</a>
             <a class="<?= active($currentPath, '/admin/instagram') ?>" href="/admin/instagram">📸 Instagram</a>
             <a class="<?= active($currentPath, '/admin/mensagens') ?>" href="/admin/mensagens">✉️ Mensagens</a>

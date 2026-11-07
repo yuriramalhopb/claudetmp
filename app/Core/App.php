@@ -129,6 +129,29 @@ final class App
         );
     }
 
+    /** Uploads privados (comprovantes de pagamento): fora da pasta pública. */
+    public function privateUploader(): ImageUploader
+    {
+        return new ImageUploader(
+            $this->basePath . '/storage/private',
+            (int) $this->config->get('security.upload_max_mb', 8) * 1024 * 1024
+        );
+    }
+
+    public function waiver(): \App\Services\Waiver
+    {
+        return new \App\Services\Waiver($this->model(Setting::class));
+    }
+
+    public function pix(): \App\Services\Pix
+    {
+        return new \App\Services\Pix(
+            (string) $this->config->get('pix.key', ''),
+            (string) $this->config->get('pix.name', ''),
+            (string) $this->config->get('pix.city', '')
+        );
+    }
+
     public function backup(): Backup
     {
         $dir = (string) $this->config->get('backup.dir', 'storage/backups');
