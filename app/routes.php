@@ -22,6 +22,12 @@ $r->get('/instalar', [HomeController::class, 'install']);
 
 $r->get('/galeria', [GalleryController::class, 'index']);
 $r->get('/galeria/{id}', [GalleryController::class, 'show']);
+$r->get('/fotos/{id}', [App\Controllers\PhotoController::class, 'show']);
+$r->post('/fotos/{id}/curtir', [App\Controllers\PhotoController::class, 'like'], ['auth', 'approved']);
+$r->post('/fotos/{id}/comentar', [App\Controllers\PhotoController::class, 'comment'], ['auth', 'approved']);
+$r->post('/fotos/{id}/comentarios/{cid}/excluir', [App\Controllers\PhotoController::class, 'deleteComment'], ['auth', 'approved']);
+$r->post('/fotos/{id}/marcar', [App\Controllers\PhotoController::class, 'tag'], ['auth', 'approved']);
+$r->post('/fotos/{id}/marcacoes/{uid}/remover', [App\Controllers\PhotoController::class, 'untag'], ['auth', 'approved']);
 
 $r->get('/instagram', [InstagramController::class, 'index']);
 

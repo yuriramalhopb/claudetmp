@@ -18,6 +18,14 @@
                 <?php if ($m['bio']): ?><p class="prose"><?= nl2br_e($m['bio']) ?></p><?php endif; ?>
             </div>
         </div>
+        <?php if (!empty($taggedPhotos)): ?>
+            <h2>Aparece nas fotos 📸</h2>
+            <div class="photo-grid small">
+                <?php foreach ($taggedPhotos as $tp): ?>
+                    <a class="photo" href="/fotos/<?= (int) $tp['id'] ?>"><img src="<?= e(upload_url('photos', $tp['filename'], true)) ?>" alt="<?= e($tp['caption'] ?: 'Foto') ?>" loading="lazy"></a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
         <?php if ($agenda): ?>
             <h2>Próximas trilhas confirmadas</h2>
             <div class="event-grid">

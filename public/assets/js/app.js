@@ -80,6 +80,12 @@
       img.src = a.getAttribute('href');
       img.alt = a.querySelector('img')?.alt || '';
       cap.textContent = a.dataset.caption || '';
+      const link = lb.querySelector('[data-lb-link]');
+      if (link) {
+        const page = a.dataset.page || '';
+        link.hidden = !page.startsWith('/fotos/');
+        if (!link.hidden) link.href = page;
+      }
     };
     const close = () => { lb.hidden = true; img.src = ''; document.body.style.overflow = ''; };
 

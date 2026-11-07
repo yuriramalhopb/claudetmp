@@ -15,9 +15,10 @@
         <?php if ($photos): ?>
             <div class="photo-grid" data-gallery>
                 <?php foreach ($photos as $p): ?>
-                    <a class="photo" href="<?= e(upload_url('photos', $p['filename'])) ?>" data-lb-item
+                    <a class="photo" href="<?= e(upload_url('photos', $p['filename'])) ?>" data-lb-item data-page="/fotos/<?= (int) $p['id'] ?>"
                        data-caption="<?= e(trim(($p['caption'] ?? '') . ($p['author'] ? ' — foto de ' . ($p['author_nick'] ?: $p['author']) : ''))) ?>">
                         <img src="<?= e(upload_url('photos', $p['filename'], true)) ?>" alt="<?= e($p['caption'] ?: 'Foto da trilha') ?>" loading="lazy">
+                        <?php if ($p['likes'] || $p['comments']): ?><span class="photo-counts"><?= $p['likes'] ? '❤ ' . (int) $p['likes'] : '' ?> <?= $p['comments'] ? '💬 ' . (int) $p['comments'] : '' ?></span><?php endif; ?>
                     </a>
                 <?php endforeach; ?>
             </div>

@@ -10,7 +10,10 @@ final class Photo extends Model
     public function byAlbum(int $albumId, int $limit, int $offset): array
     {
         return $this->db->fetchAll(
-            "SELECT p.*, u.name AS author, u.nickname AS author_nick FROM photos p
+            "SELECT p.*, u.name AS author, u.nickname AS author_nick,
+                (SELECT COUNT(*) FROM photo_likes l WHERE l.photo_id = p.id) AS likes,
+                (SELECT COUNT(*) FROM photo_comments c WHERE c.photo_id = p.id) AS comments
+             FROM photos p
              LEFT JOIN users u ON u.id = p.uploaded_by
              WHERE p.album_id = ? AND p.status = 'approved' ORDER BY p.id DESC LIMIT ? OFFSET ?",
             [$albumId, $limit, $offset]
@@ -29,6 +32,24 @@ final class Photo extends Model
              WHERE p.status = 'approved' ORDER BY p.id DESC LIMIT ?",
             [$limit]
         );
+    }
+
+    public function findApprovedWithAlbum(int $id): ?array
+    {
+        return $this->db->fetch(
+            "SELECT p.*, a.title AS album_title, u.name AS author, u.nickname AS author_nick
+             FROM photos p LEFT JOIN albums a ON a.id = p.album_id LEFT JOIN users u ON u.id = p.uploaded_by
+             WHERE p.id = ? AND p.status = 'approved'",
+            [$id]
+        );
+    }
+
+    /** Fotos vizinhas no mesmo álbum (para navegar). */
+    public function neighbors(int $albumId, int $id): array
+    {
+        $newer = $this->db->fetchValue("SELECT id FROM photos WHERE album_id = ? AND status = 'approved' AND id > ? ORDER BY id ASC LIMIT 1", [$albumId, $id]);
+        $older = $this->db->fetchValue("SELECT id FROM photos WHERE album_id = ? AND status = 'approved' AND id < ? ORDER BY id DESC LIMIT 1", [$albumId, $id]);
+        return [$newer ? (int) $newer : null, $older ? (int) $older : null];
     }
 
     public function pending(): array

@@ -97,7 +97,7 @@
 <div class="lightbox" data-lightbox hidden>
     <button class="lb-close" type="button" data-lb-close aria-label="Fechar">×</button>
     <button class="lb-prev" type="button" data-lb-prev aria-label="Anterior">‹</button>
-    <figure><img alt="" data-lb-img><figcaption data-lb-caption></figcaption></figure>
+    <figure><img alt="" data-lb-img><figcaption><span data-lb-caption></span> <a class="lb-link" data-lb-link hidden>❤️ 💬 Curtir, comentar e marcar</a></figcaption></figure>
     <button class="lb-next" type="button" data-lb-next aria-label="Próxima">›</button>
 </div>
 

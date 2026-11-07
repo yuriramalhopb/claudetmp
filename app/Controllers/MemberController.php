@@ -49,6 +49,7 @@ final class MemberController extends Controller
             // telefone só para trilheiros logados e se o membro autorizou
             'showPhone' => (bool) $member['show_phone'] && $this->auth->isApproved(),
             'agenda' => $this->app->model(Event::class)->userAgenda((int) $member['id']),
+            'taggedPhotos' => $this->app->model(\App\Models\PhotoSocial::class)->photosOfUser((int) $member['id']),
         ]);
     }
 }
