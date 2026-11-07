@@ -10,7 +10,7 @@
  */
 'use strict';
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const STATIC_CACHE = `ducks-static-${VERSION}`;
 const IMAGE_CACHE = `ducks-images-${VERSION}`;
 const MAX_IMAGES = 150;
@@ -51,6 +51,37 @@ self.addEventListener('message', (event) => {
   if (event.data === 'clear-image-cache') {
     event.waitUntil(caches.delete(IMAGE_CACHE));
   }
+});
+
+// ---------- Notificações push ----------
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) { data = {}; }
+  const title = String(data.title || 'Ducks Offroad').slice(0, 120);
+  const options = {
+    body: String(data.body || 'Novidades na turma!').slice(0, 300),
+    icon: '/assets/icons/icon-192.png',
+    badge: '/assets/icons/icon-192.png',
+    tag: String(data.tag || 'ducks'),
+    data: { url: typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/' },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || '/', self.location.origin);
+  if (target.origin !== self.location.origin) return; // nunca abre sites externos
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of all) {
+      if (new URL(c.url).origin === self.location.origin && 'focus' in c) {
+        await c.focus();
+        return c.navigate ? c.navigate(target.href) : undefined;
+      }
+    }
+    return self.clients.openWindow(target.href);
+  })());
 });
 
 self.addEventListener('fetch', (event) => {

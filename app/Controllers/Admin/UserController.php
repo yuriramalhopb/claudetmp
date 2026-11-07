@@ -50,6 +50,9 @@ final class UserController extends Controller
         $user = $this->notFoundIfNull($this->app->model(User::class)->find($id));
         $this->app->model(User::class)->setStatus($id, $status);
         $this->app->audit('status_trilheiro', "#{$id} {$user['status']} -> {$status}");
+        if ($status === 'approved' && $user['status'] !== 'approved') {
+            $this->app->notifier()->userApproved($user);
+        }
         $this->flash('success', 'Situação de ' . $user['name'] . ' atualizada.');
         return $this->back('/admin/trilheiros');
     }

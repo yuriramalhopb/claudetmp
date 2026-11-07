@@ -21,6 +21,7 @@
             <a class="<?= active($currentPath, '/admin/instagram') ?>" href="/admin/instagram">📸 Instagram</a>
             <a class="<?= active($currentPath, '/admin/mensagens') ?>" href="/admin/mensagens">✉️ Mensagens</a>
             <a class="<?= active($currentPath, '/admin/auditoria') ?>" href="/admin/auditoria">🔒 Auditoria</a>
+            <a class="<?= active($currentPath, '/admin/sistema') ?>" href="/admin/sistema">⚙️ Sistema</a>
             <hr>
             <a href="/">← Ver site</a>
             <form method="post" action="/sair"><?= $csrf->field() ?><button class="link-btn" type="submit">Sair</button></form>

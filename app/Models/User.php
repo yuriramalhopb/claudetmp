@@ -55,8 +55,10 @@ final class User extends Model
         if (array_key_exists('instagram', $row) && $row['instagram'] !== null) {
             $row['instagram'] = ltrim((string) $row['instagram'], '@');
         }
-        if (array_key_exists('show_phone', $data)) {
-            $row['show_phone'] = $data['show_phone'] ? 1 : 0;
+        foreach (['show_phone', 'notify_email', 'notify_push'] as $flag) {
+            if (array_key_exists($flag, $data)) {
+                $row[$flag] = $data[$flag] ? 1 : 0;
+            }
         }
         $row['updated_at'] = self::now();
         $this->db->update('users', $row, 'id = :id', ['id' => $id]);

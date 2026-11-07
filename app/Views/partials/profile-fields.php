@@ -64,6 +64,13 @@
         <?= field_error($errors, 'bio') ?>
     </label>
 </fieldset>
+<?php if (!empty($u)): ?>
+<fieldset>
+    <legend>Avisos</legend>
+    <label class="check"><input type="checkbox" name="notify_email" value="1"<?= checked(old($old, 'notify_email', $u['notify_email'] ?? 1)) ?>> Receber por e-mail as trilhas novas e lembretes</label>
+    <label class="check"><input type="checkbox" name="notify_push" value="1"<?= checked(old($old, 'notify_push', $u['notify_push'] ?? 1)) ?>> Receber notificações no celular (ative também no botão 🔔 do app)</label>
+</fieldset>
+<?php endif; ?>
 <fieldset>
     <legend>Segurança na trilha <small>(visível apenas para a administração)</small></legend>
     <div class="grid-3">

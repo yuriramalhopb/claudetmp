@@ -7,3 +7,7 @@
 !/public/uploads/**/.gitkeep
 !/public/uploads/.htaccess
 .DS_Store
+/storage/backups/*
+/storage/cron.lock
+/storage/private/**/*
+!/storage/private/**/.gitkeep

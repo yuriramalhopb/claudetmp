@@ -49,6 +49,10 @@ $r->post('/esqueci-senha', [AuthController::class, 'forgot'], ['guest']);
 $r->get('/redefinir-senha', [AuthController::class, 'resetForm'], ['guest']);
 $r->post('/redefinir-senha', [AuthController::class, 'reset'], ['guest']);
 
+// ---- Notificações push (app) ----
+$r->post('/push/inscrever', [App\Controllers\PushController::class, 'subscribe'], ['auth', 'approved']);
+$r->post('/push/cancelar', [App\Controllers\PushController::class, 'unsubscribe'], ['auth']);
+
 // ---- Área do trilheiro ----
 $r->group('/minha-conta', ['auth'], function (Router $r): void {
     $r->get('', [AccountController::class, 'index']);
@@ -70,6 +74,10 @@ $r->post('/galeria/enviar', [GalleryController::class, 'upload'], ['auth', 'appr
 $r->group('/admin', ['auth', 'admin'], function (Router $r): void {
     $r->get('', [Admin\DashboardController::class, 'index']);
     $r->get('/auditoria', [Admin\DashboardController::class, 'audit']);
+    $r->post('/push/teste', [App\Controllers\PushController::class, 'test']);
+    $r->get('/sistema', [Admin\SystemController::class, 'index']);
+    $r->post('/sistema/email-teste', [Admin\SystemController::class, 'testEmail']);
+    $r->post('/sistema/backup', [Admin\SystemController::class, 'backupNow']);
 
     $r->get('/trilheiros', [Admin\UserController::class, 'index']);
     $r->get('/trilheiros/exportar.csv', [Admin\UserController::class, 'export']);

@@ -116,7 +116,7 @@ final class AuthController extends Controller
         if ($user && $user['status'] !== 'blocked') {
             $token = $this->app->model(PasswordReset::class)->createToken((int) $user['id']);
             $link = $this->app->config->get('app.url') . '/redefinir-senha?token=' . $token;
-            $this->app->mailer()->send(
+            $this->app->notifier()->sendNow(
                 $user['email'],
                 'Redefinição de senha - ' . $this->app->config->get('app.name'),
                 "Olá, {$user['name']}!\n\nPara criar uma nova senha, acesse o link abaixo (válido por 60 minutos):\n{$link}\n\nSe você não pediu, ignore este e-mail."

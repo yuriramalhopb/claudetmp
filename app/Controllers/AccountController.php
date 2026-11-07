@@ -30,6 +30,8 @@ final class AccountController extends Controller
     {
         $data = $request->only(User::PROFILE_FIELDS);
         $data['show_phone'] = $request->bool('show_phone');
+        $data['notify_email'] = $request->bool('notify_email');
+        $data['notify_push'] = $request->bool('notify_push');
         if ($fail = $this->validate($data, AuthController::PROFILE_RULES, '/minha-conta/editar')) {
             return $fail;
         }

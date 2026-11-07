@@ -11,6 +11,8 @@
     <meta property="og:type" content="website">
     <?php if (!empty($ogImage)): ?><meta property="og:image" content="<?= e($ogImage) ?>"><?php endif; ?>
 <?= $view->partial('pwa-head') ?>
+    <meta name="csrf-token" content="<?= e($csrf->token()) ?>">
+    <?php if ($auth->isApproved() && $vapidPublicKey !== ''): ?><meta name="vapid-key" content="<?= e($vapidPublicKey) ?>"><?php endif; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap">
@@ -36,6 +38,7 @@
             <a class="<?= active($currentPath, '/trilheiros') ?>" href="/trilheiros">Trilheiros</a>
             <a class="<?= active($currentPath, '/contato') ?>" href="/contato">Contato</a>
             <button class="link-btn install-btn" type="button" data-install hidden>📲 Instalar app</button>
+            <button class="link-btn push-btn" type="button" data-push-toggle hidden>🔔 Ativar avisos</button>
             <span class="nav-sep"></span>
             <?php if ($auth->check()): ?>
                 <?php if ($auth->isAdmin()): ?><a class="<?= active($currentPath, '/admin') ?>" href="/admin">Painel</a><?php endif; ?>

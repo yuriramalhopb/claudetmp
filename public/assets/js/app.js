@@ -184,3 +184,61 @@
     });
   });
 })();
+
+// ---------- Notificações push ----------
+(() => {
+  'use strict';
+  const btn = document.querySelector('[data-push-toggle]');
+  const vapid = document.querySelector('meta[name="vapid-key"]')?.content;
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+  if (!btn || !vapid || !csrf || !('serviceWorker' in navigator) || !('PushManager' in window) || !window.isSecureContext) return;
+
+  const toBytes = (b64) => {
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+    const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+  };
+  const post = (url, data) => fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ _csrf: csrf, ...data }),
+  });
+  const render = (on) => {
+    btn.hidden = false;
+    btn.textContent = on ? '🔔 Avisos ativos' : '🔕 Ativar avisos';
+    btn.setAttribute('aria-pressed', String(on));
+  };
+
+  navigator.serviceWorker.ready.then(async (reg) => {
+    let sub = await reg.pushManager.getSubscription();
+    render(!!sub && Notification.permission === 'granted');
+    if (sub) { // mantém a inscrição sincronizada com o servidor
+      const j = sub.toJSON();
+      post('/push/inscrever', { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }).catch(() => {});
+    }
+    btn.addEventListener('click', async () => {
+      try {
+        sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await post('/push/cancelar', { endpoint: sub.endpoint });
+          await sub.unsubscribe();
+          render(false);
+          return;
+        }
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          alert('As notificações foram bloqueadas. Libere nas configurações do navegador/app.');
+          return;
+        }
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toBytes(vapid) });
+        const j = sub.toJSON();
+        const res = await post('/push/inscrever', { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth });
+        if (!res.ok) throw new Error('servidor');
+        render(true);
+      } catch (e) {
+        alert('Não foi possível ativar as notificações neste aparelho.');
+      }
+    });
+  });
+})();

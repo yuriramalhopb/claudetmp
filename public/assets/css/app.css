@@ -380,3 +380,4 @@ textarea { resize: vertical; }
 /* Rodando como app: respeita o notch/ilha do iPhone */
 .is-app .site-header { padding-top: env(safe-area-inset-top); }
 .is-app .site-footer { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+.push-btn { color: var(--duck) !important; }
