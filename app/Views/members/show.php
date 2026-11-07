@@ -18,6 +18,16 @@
                 <?php if ($m['bio']): ?><p class="prose"><?= nl2br_e($m['bio']) ?></p><?php endif; ?>
             </div>
         </div>
+        <div class="member-stats">
+            <div><strong><?= (int) $stats['trails'] ?></strong><span>trilhas com a turma</span></div>
+            <div><strong><?= e(number_format($stats['km'], 0, ',', '.')) ?></strong><span>km rodados</span></div>
+            <div><strong><?= count($badges) ?></strong><span>selos</span></div>
+        </div>
+        <?php if ($badges): ?>
+            <ul class="badges">
+                <?php foreach ($badges as $b): ?><li title="<?= e($b['desc']) ?>"><span><?= e($b['icon']) ?></span><?= e($b['name']) ?></li><?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
         <?php if (!empty($taggedPhotos)): ?>
             <h2>Aparece nas fotos 📸</h2>
             <div class="photo-grid small">

@@ -6,10 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(($title ?? '') !== '' ? $title . ' · ' . $siteName : $siteName) ?></title>
     <meta name="description" content="<?= e($metaDescription ?? 'Ducks Offroad — turma de trilha de moto. Agenda de trilhas, galeria de fotos, Instagram e cadastro de trilheiros.') ?>">
+    <?php $canonical = $app->config->get('app.url') . ($currentPath === '/' ? '/' : $currentPath); ?>
+    <link rel="canonical" href="<?= e($canonical) ?>">
+    <?php if (!empty($noindex) || preg_match('#^/(minha-conta|entrar|cadastro|esqueci-senha|redefinir-senha)#', $currentPath)): ?><meta name="robots" content="noindex, nofollow"><?php endif; ?>
+    <meta property="og:url" content="<?= e($canonical) ?>">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:description" content="<?= e($metaDescription ?? 'Ducks Offroad — turma de trilha de moto.') ?>">
+    <meta name="twitter:card" content="summary_large_image">
     <meta property="og:title" content="<?= e($title ?? $siteName) ?>">
     <meta property="og:site_name" content="<?= e($siteName) ?>">
     <meta property="og:type" content="website">
-    <?php if (!empty($ogImage)): ?><meta property="og:image" content="<?= e($ogImage) ?>"><?php endif; ?>
+    <meta property="og:image" content="<?= e(!empty($ogImage) ? $ogImage : $app->config->get('app.url') . '/assets/icons/icon-512.png') ?>">
+    <?php if (!empty($jsonLd)): ?><script type="application/ld+json" nonce="<?= e($nonce) ?>"><?= json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script><?php endif; ?>
 <?= $view->partial('pwa-head') ?>
     <meta name="csrf-token" content="<?= e($csrf->token()) ?>">
     <?php if ($auth->isApproved() && $vapidPublicKey !== ''): ?><meta name="vapid-key" content="<?= e($vapidPublicKey) ?>"><?php endif; ?>
@@ -38,6 +46,7 @@
             <a class="<?= active($currentPath, '/galeria') ?>" href="/galeria">Galeria</a>
             <a class="<?= active($currentPath, '/instagram') ?>" href="/instagram">Instagram</a>
             <a class="<?= active($currentPath, '/trilheiros') ?>" href="/trilheiros">Trilheiros</a>
+            <a class="<?= active($currentPath, '/ranking') ?>" href="/ranking">Ranking</a>
             <a class="<?= active($currentPath, '/contato') ?>" href="/contato">Contato</a>
             <button class="link-btn install-btn" type="button" data-install hidden>📲 Instalar app</button>
             <button class="link-btn push-btn" type="button" data-push-toggle hidden>🔔 Ativar avisos</button>

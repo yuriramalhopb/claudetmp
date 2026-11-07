@@ -22,6 +22,15 @@ final class HomeController extends Controller
 
         return $this->view('home/index', [
             'title' => 'Início',
+            'jsonLd' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'SportsOrganization',
+                'name' => $this->app->config->get('app.name'),
+                'url' => $this->app->config->get('app.url'),
+                'logo' => $this->app->config->get('app.url') . '/assets/icons/icon-512.png',
+                'sport' => 'Trilha de moto (off-road)',
+                'sameAs' => ['https://www.instagram.com/' . $this->app->config->get('instagram.username') . '/'],
+            ],
             'events' => $events->upcoming('', '', '', 4),
             'photos' => $this->app->model(Photo::class)->latest(8),
             'posts' => $posts,

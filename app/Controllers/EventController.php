@@ -141,6 +141,7 @@ final class EventController extends Controller
             'event' => $event,
             'attendees' => $events->attendees((int) $event['id']),
             'going' => $userId ? $events->isGoing((int) $event['id'], $userId) : false,
+            'jsonLd' => $this->eventJsonLd($event),
             'myRsvp' => $userId ? $events->rsvp((int) $event['id'], $userId) : null,
             'waiverText' => $this->app->waiver()->text(),
             'pixPayload' => $this->pixPayloadFor($event, $userId),
@@ -259,6 +260,43 @@ final class EventController extends Controller
         }
         $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower((string) iconv('UTF-8', 'ASCII//TRANSLIT', $event['title']))), '-');
         return Response::download((string) file_get_contents($path), ($slug ?: 'trilha') . '.gpx', 'application/gpx+xml');
+    }
+
+    /** Dados estruturados schema.org/Event (Google mostra data, local e preço na busca). */
+    private function eventJsonLd(array $event): array
+    {
+        $base = (string) $this->app->config->get('app.url');
+        $ld = [
+            '@context' => 'https://schema.org',
+            '@type' => 'SportsEvent',
+            'name' => $event['title'],
+            'startDate' => date('c', (int) strtotime($event['start_at'])),
+            'eventStatus' => 'https://schema.org/EventScheduled',
+            'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+            'url' => $base . '/agenda/' . (int) $event['id'],
+            'sport' => 'Trilha de moto (off-road)',
+            'location' => [
+                '@type' => 'Place',
+                'name' => $event['location'] ?: $event['city'],
+                'address' => ['@type' => 'PostalAddress', 'addressLocality' => $event['city'], 'addressRegion' => $event['state'], 'addressCountry' => 'BR'],
+            ],
+            'organizer' => ['@type' => 'Organization', 'name' => $event['organizer'] ?: $this->app->config->get('app.name'), 'url' => $base],
+        ];
+        if ($event['end_at']) {
+            $ld['endDate'] = date('c', (int) strtotime($event['end_at']));
+        }
+        if ($event['description']) {
+            $ld['description'] = excerpt($event['description'], 500);
+        }
+        if ($banner = upload_url('events', $event['cover'])) {
+            $ld['image'] = [$base . $banner];
+        }
+        if ((float) $event['pix_amount'] > 0) {
+            $ld['offers'] = ['@type' => 'Offer', 'price' => number_format((float) $event['pix_amount'], 2, '.', ''), 'priceCurrency' => 'BRL', 'url' => $ld['url'], 'availability' => 'https://schema.org/InStock'];
+        } elseif (stripos((string) $event['price'], 'grat') !== false) {
+            $ld['isAccessibleForFree'] = true;
+        }
+        return $ld;
     }
 
     private function pixPayloadFor(array $event, ?int $userId): ?string

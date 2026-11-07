@@ -40,6 +40,9 @@ $r->get('/trilhas-do-ano/{ano}/calendario.ics', [EventController::class, 'yearIc
 
 $r->get('/trilheiros', [MemberController::class, 'index']);
 $r->get('/trilheiros/{id}', [MemberController::class, 'show']);
+$r->get('/ranking', [App\Controllers\RankingController::class, 'index']);
+$r->get('/sitemap.xml', [App\Controllers\SeoController::class, 'sitemap']);
+$r->get('/robots.txt', [App\Controllers\SeoController::class, 'robots']);
 
 $r->get('/contato', [ContactController::class, 'form']);
 $r->post('/contato', [ContactController::class, 'send']);
