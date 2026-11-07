@@ -117,10 +117,14 @@ $full = !empty($event['capacity']) && count($attendees) >= (int) $event['capacit
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
+                        <?php if (!$myRsvp || $myRsvp['payment_status'] !== 'paid'): ?>
                         <form method="post" action="/agenda/<?= (int) $event['id'] ?>/presenca" data-confirm="Cancelar sua presença nesta trilha?">
                             <?= $csrf->field() ?>
                             <button class="btn btn-ghost btn-block" type="submit">Cancelar minha presença</button>
                         </form>
+                        <?php else: ?>
+                        <p class="hint">Precisa cancelar? Fale com a organização (reembolso).</p>
+                        <?php endif; ?>
                     <?php elseif ($full): ?>
                         <p class="hint">Vagas esgotadas.</p>
                     <?php elseif ($regClosed): ?>
