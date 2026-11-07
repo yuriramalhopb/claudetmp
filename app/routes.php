@@ -44,6 +44,8 @@ $r->post('/cadastro', [AuthController::class, 'register'], ['guest']);
 $r->get('/entrar', [AuthController::class, 'loginForm'], ['guest']);
 $r->post('/entrar', [AuthController::class, 'login'], ['guest']);
 $r->post('/sair', [AuthController::class, 'logout']);
+$r->get('/entrar/2fa', [App\Controllers\TwoFactorController::class, 'challengeForm'], ['guest']);
+$r->post('/entrar/2fa', [App\Controllers\TwoFactorController::class, 'challenge'], ['guest']);
 $r->get('/esqueci-senha', [AuthController::class, 'forgotForm'], ['guest']);
 $r->post('/esqueci-senha', [AuthController::class, 'forgot'], ['guest']);
 $r->get('/redefinir-senha', [AuthController::class, 'resetForm'], ['guest']);
@@ -62,6 +64,9 @@ $r->group('/minha-conta', ['auth'], function (Router $r): void {
     $r->post('/senha', [AccountController::class, 'password']);
     $r->post('/excluir', [AccountController::class, 'destroy']);
     $r->get('/meus-dados.json', [AccountController::class, 'export']);
+    $r->get('/2fa', [App\Controllers\TwoFactorController::class, 'setupForm']);
+    $r->post('/2fa/ativar', [App\Controllers\TwoFactorController::class, 'enable']);
+    $r->post('/2fa/desativar', [App\Controllers\TwoFactorController::class, 'disable']);
 });
 
 $r->post('/agenda/{id}/presenca', [EventController::class, 'rsvp'], ['auth', 'approved']);
@@ -85,6 +90,7 @@ $r->group('/admin', ['auth', 'admin'], function (Router $r): void {
     $r->post('/trilheiros/{id}/status', [Admin\UserController::class, 'status']);
     $r->post('/trilheiros/{id}/perfil', [Admin\UserController::class, 'role']);
     $r->post('/trilheiros/{id}/excluir', [Admin\UserController::class, 'destroy']);
+    $r->post('/trilheiros/{id}/2fa-reset', [Admin\UserController::class, 'resetTwoFactor']);
 
     $r->get('/eventos', [Admin\EventController::class, 'index']);
     $r->get('/eventos/novo', [Admin\EventController::class, 'create']);

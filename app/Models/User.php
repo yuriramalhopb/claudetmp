@@ -106,6 +106,47 @@ final class User extends Model
         }
     }
 
+    // ---- 2FA ----
+    public function enableTotp(int $id, string $encryptedSecret, array $recoveryHashes, int $step): void
+    {
+        $this->db->update('users', [
+            'totp_secret' => $encryptedSecret,
+            'totp_enabled_at' => self::now(),
+            'totp_recovery' => json_encode(array_values($recoveryHashes)),
+            'totp_last_step' => $step,
+        ], 'id = :id', ['id' => $id]);
+    }
+
+    public function disableTotp(int $id): void
+    {
+        $this->db->update('users', ['totp_secret' => null, 'totp_enabled_at' => null, 'totp_recovery' => null, 'totp_last_step' => null], 'id = :id', ['id' => $id]);
+        $this->bumpSessionVersion($id);
+    }
+
+    public function setTotpStep(int $id, int $step): void
+    {
+        $this->db->update('users', ['totp_last_step' => $step], 'id = :id', ['id' => $id]);
+    }
+
+    /** Usa (e invalida) um código de recuperação. */
+    public function consumeRecoveryCode(int $id, string $hash): bool
+    {
+        $user = $this->find($id);
+        $list = json_decode((string) ($user['totp_recovery'] ?? '[]'), true) ?: [];
+        $idx = null;
+        foreach ($list as $i => $h) {
+            if (is_string($h) && hash_equals($h, $hash)) {
+                $idx = $i;
+            }
+        }
+        if ($idx === null) {
+            return false;
+        }
+        unset($list[$idx]);
+        $this->db->update('users', ['totp_recovery' => json_encode(array_values($list))], 'id = :id', ['id' => $id]);
+        return true;
+    }
+
     public function countAdmins(): int
     {
         return $this->count("role = 'admin' AND status = 'approved'");

@@ -381,3 +381,13 @@ textarea { resize: vertical; }
 .is-app .site-header { padding-top: env(safe-area-inset-top); }
 .is-app .site-footer { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
 .push-btn { color: var(--duck) !important; }
+
+/* ---------- 2FA / QR ---------- */
+.qr-box { display: grid; place-items: center; width: 236px; min-height: 236px; margin: 1rem 0; padding: 8px; background: #fff; border-radius: 12px; color: #333; }
+.qr-img { display: block; image-rendering: pixelated; }
+.code-input { font-size: 1.6rem !important; letter-spacing: .3em; text-align: center; font-variant-numeric: tabular-nums; }
+.steps { padding-left: 1.2rem; }
+.steps li { margin-bottom: .8rem; }
+.secret { font-size: 1.1rem; letter-spacing: .1em; word-break: break-all; }
+.recovery-codes { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; margin: 1rem 0; }
+.recovery-codes code { display: block; text-align: center; font-size: 1.15rem; padding: .5rem; letter-spacing: .1em; }

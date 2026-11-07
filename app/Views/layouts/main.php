@@ -17,6 +17,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
+<?php foreach ($styles ?? [] as $href): ?>    <link rel="stylesheet" href="<?= asset($href) ?>">
+<?php endforeach; ?>
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
@@ -100,6 +102,8 @@
 </div>
 
 <script src="<?= asset('js/app.js') ?>" defer></script>
+<?php foreach ($scripts ?? [] as $src): ?><script src="<?= asset($src) ?>" defer></script>
+<?php endforeach; ?>
 <?php if (!empty($instagramEmbed)): ?>
 <script async src="https://www.instagram.com/embed.js" nonce="<?= e($nonce) ?>"></script>
 <?php endif; ?>

@@ -257,6 +257,11 @@ final class App
                     $this->audit('acesso_negado_admin', $this->request->path());
                     throw new HttpException(403);
                 }
+                // o painel exige verificação em duas etapas ativada
+                if (!$this->auth->hasTwoFactor()) {
+                    $this->session->flash('warning', 'Por segurança, ative a verificação em duas etapas para acessar o painel.');
+                    throw new RedirectException('/minha-conta/2fa');
+                }
                 break;
             default:
                 throw new \LogicException('Middleware desconhecido: ' . $name);

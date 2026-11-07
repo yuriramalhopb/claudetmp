@@ -16,6 +16,7 @@
             <div class="sensitive"><dt>🩸 Tipo sanguíneo</dt><dd><?= e($u['blood_type'] ?: '—') ?></dd></div>
             <div class="sensitive"><dt>🚑 Emergência</dt><dd><?= e($u['emergency_name'] ?: '—') ?> <?= e($u['emergency_phone']) ?></dd></div>
             <div><dt>Cadastro</dt><dd><?= e(date('d/m/Y H:i', strtotime($u['created_at']))) ?></dd></div>
+            <div><dt>2FA</dt><dd><?= $u['totp_enabled_at'] ? '✅ ativado' : '—' ?></dd></div>
             <div><dt>Último acesso</dt><dd><?= $u['last_login_at'] ? e(date('d/m/Y H:i', strtotime($u['last_login_at']))) : '—' ?></dd></div>
         </dl>
         <?php if ($u['bio']): ?><p class="prose"><?= nl2br_e($u['bio']) ?></p><?php endif; ?>
@@ -34,6 +35,11 @@
         <select name="role"><?php foreach (User::ROLES as $k => $label): ?><option value="<?= e($k) ?>"<?= selected($k, $u['role']) ?>><?= e($label) ?></option><?php endforeach; ?></select>
         <button class="btn btn-sm" type="submit">Alterar perfil</button>
     </form>
+    <?php if ($u['totp_enabled_at']): ?>
+    <form method="post" action="/admin/trilheiros/<?= (int) $u['id'] ?>/2fa-reset" class="inline-form" data-confirm="Remover o 2FA deste usuário (ex.: perdeu o celular)?">
+        <?= $csrf->field() ?><button class="btn btn-sm" type="submit">Resetar 2FA</button>
+    </form>
+    <?php endif; ?>
     <form method="post" action="/admin/trilheiros/<?= (int) $u['id'] ?>/excluir" class="inline-form" data-confirm="Excluir definitivamente este trilheiro e suas fotos?">
         <?= $csrf->field() ?>
         <button class="btn btn-sm btn-danger" type="submit">Excluir</button>

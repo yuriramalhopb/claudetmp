@@ -8,6 +8,8 @@
 <?= $view->partial('pwa-head') ?>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="<?= asset('css/app.css') ?>">
+<?php foreach ($styles ?? [] as $href): ?>    <link rel="stylesheet" href="<?= asset($href) ?>">
+<?php endforeach; ?>
 </head>
 <body class="admin">
 <div class="admin-shell">
@@ -35,5 +37,7 @@
     </div>
 </div>
 <script src="<?= asset('js/app.js') ?>" defer></script>
+<?php foreach ($scripts ?? [] as $src): ?><script src="<?= asset($src) ?>" defer></script>
+<?php endforeach; ?>
 </body>
 </html>

@@ -72,8 +72,40 @@ final class Auth
         }
 
         $this->limiter->clear($keyEmail);
+        if (!empty($user['totp_enabled_at'])) {
+            // senha correta, mas ainda falta o código do autenticador
+            $this->session->regenerate();
+            $this->session->set('2fa_user', (int) $user['id']);
+            $this->session->set('2fa_started', time());
+            return ['ok' => true, 'two_factor' => true];
+        }
         $this->login($user);
-        return ['ok' => true];
+        return ['ok' => true, 'two_factor' => false];
+    }
+
+    /** Usuário que passou na senha e aguarda o código 2FA (válido por 5 minutos). */
+    public function pendingTwoFactorUser(): ?array
+    {
+        $id = $this->session->get('2fa_user');
+        $started = (int) $this->session->get('2fa_started', 0);
+        if (!is_int($id) || time() - $started > 300) {
+            return null;
+        }
+        $user = $this->users->find($id);
+        return ($user && $user['status'] !== 'blocked' && !empty($user['totp_enabled_at'])) ? $user : null;
+    }
+
+    public function completeTwoFactor(array $user): void
+    {
+        $this->session->forget('2fa_user');
+        $this->session->forget('2fa_started');
+        $this->login($user);
+        $this->session->set('2fa_verified_at', time());
+    }
+
+    public function hasTwoFactor(): bool
+    {
+        return !empty($this->user()['totp_enabled_at']);
     }
 
     public function login(array $user): void

@@ -86,6 +86,9 @@ final class AuthController extends Controller
             return $this->failWith(['email' => [$result['error']]], ['email' => $email], '/entrar');
         }
         $this->app->csrf->rotate();
+        if (!empty($result['two_factor'])) {
+            return $this->redirect('/entrar/2fa');
+        }
         $this->flash('success', 'Bem-vindo de volta!');
         $intended = (string) $this->session->pull('intended', '');
         if ($this->auth->isAdmin() && $intended === '') {

@@ -74,6 +74,21 @@ final class UserController extends Controller
         return $this->back('/admin/trilheiros');
     }
 
+    /** Trilheiro/admin perdeu o celular: remove o 2FA (ele configura de novo no próximo acesso). */
+    public function resetTwoFactor(Request $request): Response
+    {
+        $id = $this->idParam($request);
+        if ($id === $this->auth->id()) {
+            $this->flash('error', 'Para alterar o seu 2FA use "Minha conta".');
+            return $this->back('/admin/trilheiros');
+        }
+        $user = $this->notFoundIfNull($this->app->model(User::class)->find($id));
+        $this->app->model(User::class)->disableTotp($id);
+        $this->app->audit('2fa_resetado_admin', "#{$id} {$user['email']}");
+        $this->flash('success', 'Verificação em duas etapas de ' . $user['name'] . ' foi removida.');
+        return $this->back('/admin/trilheiros');
+    }
+
     public function destroy(Request $request): Response
     {
         $id = $this->idParam($request);

@@ -30,6 +30,7 @@
                 <div><dt>Cidade</dt><dd><?= e($u['city']) ?: '—' ?></dd></div>
             </dl>
             <a class="btn btn-block" href="/minha-conta/editar">Editar perfil</a>
+            <a class="btn btn-ghost btn-block" href="/minha-conta/2fa">🔐 Verificação em duas etapas<?= !empty($u['totp_enabled_at']) ? ' ✔' : '' ?></a>
             <?php if ($u['status'] === 'approved'): ?>
                 <a class="btn btn-ghost btn-block" href="/trilheiros/<?= (int) $u['id'] ?>">Ver meu perfil público</a>
                 <a class="btn btn-ghost btn-block" href="/galeria/enviar">📷 Enviar fotos</a>
