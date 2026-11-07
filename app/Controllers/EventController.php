@@ -246,6 +246,21 @@ final class EventController extends Controller
         return $this->redirect('/agenda/' . (int) $event['id'] . '#pagamento');
     }
 
+    /** Download do percurso (somente trilheiros aprovados — pode conter acessos a propriedades). */
+    public function gpx(Request $request): Response
+    {
+        $event = $this->app->model(Event::class)->findApproved($this->idParam($request));
+        if ($event === null || !$event['gpx_file'] || !preg_match('/^[a-f0-9]{32}\.gpx$/', $event['gpx_file'])) {
+            throw new HttpException(404);
+        }
+        $path = $this->app->basePath . '/storage/private/gpx/' . $event['gpx_file'];
+        if (!is_file($path)) {
+            throw new HttpException(404);
+        }
+        $slug = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower((string) iconv('UTF-8', 'ASCII//TRANSLIT', $event['title']))), '-');
+        return Response::download((string) file_get_contents($path), ($slug ?: 'trilha') . '.gpx', 'application/gpx+xml');
+    }
+
     private function pixPayloadFor(array $event, ?int $userId): ?string
     {
         if (!$userId || (float) $event['pix_amount'] <= 0) {

@@ -71,6 +71,7 @@ $r->group('/minha-conta', ['auth'], function (Router $r): void {
 
 $r->post('/agenda/{id}/presenca', [EventController::class, 'rsvp'], ['auth', 'approved']);
 $r->post('/agenda/{id}/pagamento', [EventController::class, 'informPayment'], ['auth', 'approved']);
+$r->get('/agenda/{id}/percurso.gpx', [EventController::class, 'gpx'], ['auth', 'approved']);
 $r->get('/agenda/sugerir', [EventController::class, 'suggestForm'], ['auth', 'approved']);
 $r->post('/agenda/sugerir', [EventController::class, 'suggest'], ['auth', 'approved']);
 $r->get('/galeria/enviar', [GalleryController::class, 'uploadForm'], ['auth', 'approved']);

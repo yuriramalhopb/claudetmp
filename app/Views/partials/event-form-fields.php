@@ -120,6 +120,15 @@ $v = fn (string $k) => old($old, $k, $ev[$k] ?? '');
         <small class="hint">JPG, PNG ou WEBP até 8 MB. Pode ser o flyer do Instagram (formato retrato).</small>
         <?= field_error($errors, 'cover') ?>
     </label>
+    <?php if (!empty($showWaiverToggle)): ?>
+    <label>Percurso (arquivo GPX do Wikiloc, Strava, Garmin…)
+        <?php if (!empty($ev['gpx_file'])): ?>
+            <span class="hint">Percurso atual: <?= e(number_format((float) $ev['track_km'], 1, ',', '.')) ?> km, <?= (int) $ev['track_elevation'] ?> m de subida.</span>
+            <span class="check"><input type="checkbox" name="remove_gpx" value="1"> Remover percurso</span>
+        <?php endif; ?>
+        <input type="file" name="gpx" accept=".gpx,application/gpx+xml,application/xml,text/xml">
+    </label>
+    <?php endif; ?>
     <label>Descrição / programação
         <textarea name="description" rows="6" maxlength="5000"><?= e($v('description')) ?></textarea>
         <?= field_error($errors, 'description') ?>

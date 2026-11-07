@@ -37,6 +37,7 @@ final class EventController extends Controller
         }
         $cover = $this->storeCover($request);
         $id = $this->app->model(Event::class)->create($data, $request->bool('is_own'), 'approved', $this->auth->id(), $cover, $request->bool('requires_waiver'));
+        $this->handleGpx($request, $id, null);
         $this->app->audit('criar_evento', "#{$id} {$data['title']}");
         $this->flash('success', 'Evento criado.');
         return $this->redirect('/admin/eventos');
@@ -68,6 +69,7 @@ final class EventController extends Controller
             }
         }
         $events->updateEvent((int) $event['id'], $data, $request->bool('is_own'), $cover, $request->bool('requires_waiver'));
+        $this->handleGpx($request, (int) $event['id'], $event['gpx_file']);
         $this->app->audit('editar_evento', '#' . $event['id']);
         $this->flash('success', 'Evento atualizado.');
         return $this->redirect('/admin/eventos');
@@ -87,6 +89,7 @@ final class EventController extends Controller
         $events = $this->app->model(Event::class);
         $event = $this->notFoundIfNull($events->find($this->idParam($request)));
         $this->app->uploader()->delete('events', $event['cover']);
+        self::deleteGpx($this->app->basePath, $event['gpx_file']);
         foreach ($events->receiptFiles((int) $event['id']) as $receipt) {
             $this->app->privateUploader()->delete('receipts', $receipt);
         }
@@ -199,6 +202,46 @@ final class EventController extends Controller
         $this->app->audit('termo_atualizado', substr(hash('sha256', $text), 0, 12));
         $this->flash('success', 'Termo atualizado. Novas confirmações usarão o novo texto; os aceites antigos continuam registrados com a versão anterior.');
         return $this->redirect('/admin/termo');
+    }
+
+    /** Processa o upload/remoção do GPX do percurso. */
+    private function handleGpx(Request $request, int $eventId, ?string $oldFile): void
+    {
+        $events = $this->app->model(Event::class);
+        $file = $request->file('gpx');
+        if ($file === null) {
+            if ($request->bool('remove_gpx') && $oldFile) {
+                self::deleteGpx($this->app->basePath, $oldFile);
+                $events->setTrack($eventId, null, null, null, null);
+            }
+            return;
+        }
+        try {
+            if ((int) $file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file((string) $file['tmp_name'])) {
+                throw new \RuntimeException('Falha no envio do GPX.');
+            }
+            $gpx = new \App\Services\Gpx();
+            $track = $gpx->parse((string) $file['tmp_name']);
+            $name = bin2hex(random_bytes(16)) . '.gpx';
+            $dir = $this->app->basePath . '/storage/private/gpx';
+            if (!is_dir($dir)) {
+                mkdir($dir, 0750, true);
+            }
+            file_put_contents($dir . '/' . $name, \App\Services\Gpx::build($track['points'], $track['name'] ?: 'Trilha'), LOCK_EX);
+            $simple = \App\Services\Gpx::simplify($track['points']);
+            $events->setTrack($eventId, $name, (string) json_encode($simple), $track['km'], $track['gain']);
+            self::deleteGpx($this->app->basePath, $oldFile);
+            $this->flash('success', sprintf('Percurso importado: %s km, %d m de subida acumulada.', number_format($track['km'], 1, ',', '.'), $track['gain']));
+        } catch (\Throwable $e) {
+            $this->flash('warning', 'GPX não importado: ' . $e->getMessage());
+        }
+    }
+
+    public static function deleteGpx(string $basePath, ?string $file): void
+    {
+        if ($file && preg_match('/^[a-f0-9]{32}\.gpx$/', $file) && is_file($basePath . '/storage/private/gpx/' . $file)) {
+            @unlink($basePath . '/storage/private/gpx/' . $file);
+        }
     }
 
     private function storeCover(Request $request): ?string

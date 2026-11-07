@@ -31,6 +31,25 @@ $full = !empty($event['capacity']) && count($attendees) >= (int) $event['capacit
                 </div>
             <?php endif; ?>
 
+            <?php if (!empty($event['track_json'])): $track = json_decode($event['track_json'], true) ?: []; ?>
+            <section class="track" id="percurso">
+                <h2>🗺️ Percurso</h2>
+                <div class="track-stats">
+                    <div><strong><?= e(number_format((float) $event['track_km'], 1, ',', '.')) ?></strong><span>km</span></div>
+                    <div><strong><?= (int) $event['track_elevation'] ?></strong><span>m de subida</span></div>
+                </div>
+                <div class="track-map" data-track="<?= e($event['track_json']) ?>" aria-label="Mapa do percurso"></div>
+                <?= App\Services\Gpx::elevationSvg($track, (float) $event['track_km']) ?>
+                <p class="actions">
+                    <?php if ($auth->isApproved()): ?>
+                        <a class="btn" href="/agenda/<?= (int) $event['id'] ?>/percurso.gpx">⬇ Baixar GPX (Wikiloc, OsmAnd, Garmin…)</a>
+                    <?php else: ?>
+                        <span class="hint">O arquivo GPX fica disponível para trilheiros cadastrados.</span>
+                    <?php endif; ?>
+                </p>
+            </section>
+            <?php endif; ?>
+
             <dl class="info-list">
                 <div><dt>Quando</dt><dd><?= e(ucfirst(weekday_br($event['start_at']))) ?>, <?= e(date_br($event['start_at'], true)) ?>
                     <?php if ($event['end_at']): ?><br><small>até <?= e(date_br($event['end_at'], true)) ?></small><?php endif; ?></dd></div>

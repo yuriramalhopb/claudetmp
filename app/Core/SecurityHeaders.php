@@ -32,7 +32,7 @@ final class SecurityHeaders
             "script-src 'self' 'nonce-{$n}' https://www.instagram.com https://*.cdninstagram.com",
             "style-src 'self' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: https://*.cdninstagram.com https://*.fbcdn.net https://www.instagram.com",
+            "img-src 'self' data: https://*.cdninstagram.com https://*.fbcdn.net https://www.instagram.com https://tile.openstreetmap.org",
             "frame-src https://www.instagram.com https://www.google.com",
             "connect-src 'self' https://www.instagram.com",
             "manifest-src 'self'",

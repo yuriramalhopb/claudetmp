@@ -182,6 +182,16 @@ final class Event extends Model
         $this->db->update('events', $row, 'id = :id', ['id' => $id]);
     }
 
+    public function setTrack(int $id, ?string $file, ?string $json, ?float $km, ?int $gain): void
+    {
+        $this->db->update('events', [
+            'gpx_file' => $file, 'track_json' => $json, 'track_km' => $km, 'track_elevation' => $gain, 'updated_at' => self::now(),
+        ], 'id = :id', ['id' => $id]);
+        if ($km !== null) {
+            $this->db->execute('UPDATE events SET distance_km = ? WHERE id = ? AND (distance_km IS NULL OR distance_km = 0)', [(int) round($km), $id]);
+        }
+    }
+
     public function removeCover(int $id): void
     {
         $this->db->update('events', ['cover' => null, 'updated_at' => self::now()], 'id = :id', ['id' => $id]);
