@@ -113,7 +113,11 @@ Sem token, ainda dá para adicionar qualquer post público pelo link no painel.
    ```bash
    php bin/restore.php
    ```
-7. **Guarde o `.env`** em local seguro: a `APP_KEY` é necessária para o 2FA continuar funcionando.
+7. **Esqueceu a senha do admin?** Redefina pelo servidor (também libera bloqueios de login):
+   ```bash
+   sudo -u www-data php bin/reset-password.php seu@email.com
+   ```
+8. **Guarde o `.env`** em local seguro: a `APP_KEY` é necessária para o 2FA continuar funcionando.
 
 ## Testes automáticos
 

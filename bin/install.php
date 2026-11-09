@@ -81,6 +81,10 @@ if ($users->countAdmins() > 0) {
     $name = $ask('Nome: ');
     $email = $ask('E-mail: ');
     $password = $ask('Senha (8+ caracteres, letras e números): ', true);
+    if ($ask('Repita a senha: ', true) !== $password) {
+        fwrite(STDERR, "✘ As senhas não conferem. Rode o instalador de novo.\n");
+        exit(1);
+    }
     $v = Validator::make(compact('name', 'email', 'password'), [
         'name' => 'required|min:3|max:120',
         'email' => 'required|email',
