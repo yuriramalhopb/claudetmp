@@ -1,0 +1,11 @@
+# Edite com: crontab -e   (ajuste os caminhos)
+# Senha em arquivo protegido:  echo 'SENHA' > ~/.tplink_senha && chmod 600 ~/.tplink_senha
+TPLINK_PASSWORD_FILE=/home/SEU_USUARIO/.tplink_senha
+TPLINK_HOST=http://192.168.0.1
+
+# Desliga o Wi-Fi 5G e o de convidados às 23:00 todos os dias
+0 23 * * *  /home/SEU_USUARIO/wifi-router/.venv/bin/python /home/SEU_USUARIO/wifi-router/wifi.py off --redes 5g,guest2g,guest5g >> /home/SEU_USUARIO/wifi.log 2>&1
+
+# Liga de novo às 06:30 (seg-sex) e às 08:00 (sáb-dom)
+30 6 * * 1-5  /home/SEU_USUARIO/wifi-router/.venv/bin/python /home/SEU_USUARIO/wifi-router/wifi.py on --redes 5g,guest2g,guest5g >> /home/SEU_USUARIO/wifi.log 2>&1
+0 8 * * 0,6   /home/SEU_USUARIO/wifi-router/.venv/bin/python /home/SEU_USUARIO/wifi-router/wifi.py on --redes 5g,guest2g,guest5g >> /home/SEU_USUARIO/wifi.log 2>&1
