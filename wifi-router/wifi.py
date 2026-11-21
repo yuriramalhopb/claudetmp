@@ -64,7 +64,8 @@ def main():
     p.add_argument("--redes", default="todas", help="lista separada por vírgula (2g,5g,guest2g,...) ou 'todas'")
     p.add_argument("--host", default=os.environ.get("TPLINK_HOST", "http://192.168.0.1"),
                    help="endereço do roteador (padrão: http://192.168.0.1)")
-    p.add_argument("--usuario", default=os.environ.get("TPLINK_USER", "admin"))
+    p.add_argument("--usuario", default=os.environ.get("TPLINK_USER", "user"),
+                   help="usuário de login (padrão: user, exigido pela série EX; Archer usa admin)")
     p.add_argument("--senha-arquivo", help="arquivo com a senha (permissão 600)")
     p.add_argument("--sem-verificar-ssl", action="store_true", help="para roteadores com certificado https próprio")
     args = p.parse_args()
@@ -88,10 +89,10 @@ def main():
                     print(f"{nome:8} {'LIGADA' if valor else 'desligada'}")
             return
         ligar = args.acao == "on"
+        todas = args.redes.strip().lower() == "todas"
         for nome, conexao in escolher_redes(args.redes):
-            if atual.get(nome) is None:
-                print(f"{nome}: não existe neste roteador, ignorando")
-                continue
+            if todas and atual.get(nome) is None:
+                continue  # em "todas", pula redes que este roteador não tem
             router.set_wifi(conexao, ligar)
             print(f"{nome}: {'ligada' if ligar else 'desligada'}")
     finally:
