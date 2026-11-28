@@ -16,7 +16,7 @@ ob_start(); ?>
 <h1>Pix <?= brl((float) $p['amount']) ?></h1>
 <div class="card center">
   <p><span id="badge" class="badge <?= $cls ?>"><?= e($lbl) ?></span></p>
-  <div id="qr">
+  <div id="qr" <?= $p['status'] === 'approved' ? 'hidden' : '' ?>>
     <?php if ($p['qr_code_base64']): ?>
       <img src="data:image/png;base64,<?= e($p['qr_code_base64']) ?>" alt="QR Code Pix" width="240" height="240">
     <?php endif; ?>
@@ -25,7 +25,8 @@ ob_start(); ?>
     <button type="button" id="copy">Copiar código</button>
     <p class="mut">Expira em <?= e(date('d/m H:i', strtotime((string) $p['expires_at']))) ?></p>
   </div>
-  <p id="paid" class="mut" hidden></p>
+  <p id="paid" class="mut" <?= $p['status'] === 'approved' ? '' : 'hidden' ?>><?= $p['status'] === 'approved' ? '✅ Pagamento confirmado.' : '' ?></p>
+  <p id="rec" <?= $p['status'] === 'approved' ? '' : 'hidden' ?>><a href="comprovante.php?id=<?= (int) $p['id'] ?>">Ver comprovante</a></p>
 </div>
 <p class="center"><a href="index.php">← Gerar outro</a></p>
 
@@ -49,6 +50,7 @@ async function poll() {
     if (d.status === 'approved') {
       document.getElementById('qr').hidden = true;
       const p = document.getElementById('paid');
+      document.getElementById('rec').hidden = false;
       p.hidden = false; p.textContent = '✅ Pagamento confirmado' + (d.paid_at ? ' em ' + d.paid_at : '') + '.';
       return;
     }

@@ -33,7 +33,8 @@ ob_start(); ?>
       <tr>
         <td><a href="pagamento.php?id=<?= (int) $r['id'] ?>"><?= e(date('d/m H:i', strtotime($r['created_at']))) ?></a></td>
         <td><?= brl((float) $r['amount']) ?></td>
-        <td><span class="badge <?= $cls ?>"><?= e($lbl) ?></span></td>
+        <td><span class="badge <?= $cls ?>"><?= e($lbl) ?></span>
+          <?php if ($r['status'] === 'approved'): ?> <a href="comprovante.php?id=<?= (int) $r['id'] ?>">comprovante</a><?php endif; ?></td>
       </tr>
     <?php endforeach; ?>
   </table>

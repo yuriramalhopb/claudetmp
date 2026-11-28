@@ -67,8 +67,29 @@ function db(): PDO
         $pdo->exec("SET time_zone = '-03:00'");
         // Cria a tabela sozinho na primeira execução (o mesmo SQL está em schema.sql)
         $pdo->exec(file_get_contents(__DIR__ . '/schema.sql'));
+        migrar($pdo);
     }
     return $pdo;
+}
+
+/** Colunas adicionadas depois da primeira versão; acrescenta nas tabelas já existentes. */
+function migrar(PDO $pdo): void
+{
+    $extras = [
+        'date_approved' => 'DATETIME NULL',
+        'payer_name' => 'VARCHAR(200) NULL',
+        'payer_doc' => 'VARCHAR(30) NULL',
+        'e2e_id' => 'VARCHAR(100) NULL',
+        'net_amount' => 'DECIMAL(12,2) NULL',
+        'raw_json' => 'MEDIUMTEXT NULL',
+    ];
+    $have = $pdo->query("SELECT COLUMN_NAME FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'payments'")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($extras as $name => $def) {
+        if (!in_array($name, $have, true)) {
+            $pdo->exec("ALTER TABLE payments ADD COLUMN $name $def");
+        }
+    }
 }
 
 function mp_base(): string
@@ -165,14 +186,50 @@ function criar_pix(float $amount, string $description, string $payerEmail): int
     return (int) $p['id'];
 }
 
-/** Consulta o pagamento no Mercado Pago e atualiza o status local. Retorna a linha atualizada. */
+function mp_data(?string $iso): ?string
+{
+    $t = $iso ? strtotime($iso) : false;
+    return $t ? date('Y-m-d H:i:s', $t) : null;
+}
+
+/** Extrai do pagamento aprovado os dados usados no comprovante (cada campo só existe se o MP enviar). */
+function extrair_comprovante(array $p): array
+{
+    $bank = $p['point_of_interaction']['transaction_data']['bank_info'] ?? [];
+    $name = trim(($p['payer']['first_name'] ?? '') . ' ' . ($p['payer']['last_name'] ?? ''));
+    if ($name === '') {
+        $name = trim((string) ($bank['payer']['long_name'] ?? ''));
+    }
+    $doc = trim((string) ($p['payer']['identification']['number'] ?? ''));
+    $net = $p['transaction_details']['net_received_amount'] ?? null;
+    return [
+        'date_approved' => mp_data($p['date_approved'] ?? null),
+        'payer_name' => $name !== '' ? mb_substr($name, 0, 200) : null,
+        'payer_doc' => $doc !== '' ? mb_substr($doc, 0, 30) : null,
+        'e2e_id' => ($p['transaction_details']['transaction_id'] ?? null) ?: null,
+        'net_amount' => is_numeric($net) ? (float) $net : null,
+    ];
+}
+
+/** Consulta o pagamento no Mercado Pago e atualiza o status local (e os dados do comprovante). */
 function sincronizar(int $id): ?array
 {
     $p = mp_request('GET', '/v1/payments/' . $id);
     $status = (string) ($p['status'] ?? 'unknown');
-    $paidAt = $status === 'approved' ? date('Y-m-d H:i:s') : null;
-    db()->prepare('UPDATE payments SET status = ?, status_detail = ?, paid_at = COALESCE(paid_at, ?) WHERE id = ?')
-        ->execute([$status, $p['status_detail'] ?? null, $paidAt, $id]);
+    $c = $status === 'approved' ? extrair_comprovante($p) : [];
+    $paidAt = $status === 'approved' ? ($c['date_approved'] ?? date('Y-m-d H:i:s')) : null;
+    db()->prepare('UPDATE payments SET status = ?, status_detail = ?, paid_at = COALESCE(paid_at, ?),
+            date_approved = COALESCE(?, date_approved), payer_name = COALESCE(?, payer_name),
+            payer_doc = COALESCE(?, payer_doc), e2e_id = COALESCE(?, e2e_id),
+            net_amount = COALESCE(?, net_amount), raw_json = COALESCE(?, raw_json)
+        WHERE id = ?')
+        ->execute([
+            $status, $p['status_detail'] ?? null, $paidAt,
+            $c['date_approved'] ?? null, $c['payer_name'] ?? null, $c['payer_doc'] ?? null,
+            $c['e2e_id'] ?? null, $c['net_amount'] ?? null,
+            $status === 'approved' ? json_encode($p, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+            $id,
+        ]);
     return buscar($id);
 }
 
@@ -181,6 +238,18 @@ function buscar(int $id): ?array
     $st = db()->prepare('SELECT * FROM payments WHERE id = ?');
     $st->execute([$id]);
     return $st->fetch() ?: null;
+}
+
+function mascarar_doc(string $d): string
+{
+    $n = preg_replace('/\D/', '', $d);
+    if (strlen($n) === 11) {
+        return '***.' . substr($n, 3, 3) . '.' . substr($n, 6, 3) . '-**';
+    }
+    if (strlen($n) === 14) {
+        return '**.' . substr($n, 2, 3) . '.' . substr($n, 5, 3) . '/****-**';
+    }
+    return $d;
 }
 
 function status_label(string $s): array

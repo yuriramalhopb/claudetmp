@@ -11,6 +11,12 @@ CREATE TABLE IF NOT EXISTS payments (
     expires_at         DATETIME      NULL,
     created_at         DATETIME      NOT NULL,
     paid_at            DATETIME      NULL,
+    date_approved      DATETIME      NULL,
+    payer_name         VARCHAR(200)  NULL,
+    payer_doc          VARCHAR(30)   NULL,
+    e2e_id             VARCHAR(100)  NULL,
+    net_amount         DECIMAL(12,2) NULL,
+    raw_json           MEDIUMTEXT    NULL,
     KEY idx_status (status),
     KEY idx_external_reference (external_reference)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
