@@ -1,0 +1,7 @@
+/.env
+/storage/vela.sqlite*
+/storage/logs/*
+/storage/sessions/*
+/storage/backups/*
+!/storage/**/.gitkeep
+.DS_Store

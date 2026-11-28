@@ -1,0 +1,55 @@
+# Testes do Vela da Fé (pasta vela-da-fe/) em SQLite e MySQL.
+name: Vela da Fé - testes
+
+on:
+  push:
+    paths: ["vela-da-fe/**"]
+  pull_request:
+    paths: ["vela-da-fe/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: vela-da-fe
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_mysql, pdo_sqlite, gd, curl, mbstring, iconv
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Sintaxe PHP e JavaScript
+        run: |
+          find app bin public tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+          node --check public/assets/js/app.js
+      - name: Testes (SQLite)
+        run: php tests/run.php
+      - name: Testes (MySQL)
+        env:
+          TEST_DB_DRIVER: mysql
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_USER: root
+          TEST_DB_PASS: root
+          TEST_DB_NAME: vela_test
+        run: php tests/run.php
