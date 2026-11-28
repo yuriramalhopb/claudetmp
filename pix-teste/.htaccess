@@ -1,5 +1,5 @@
 # Bloqueia acesso direto a arquivos sensíveis (caso rode em Apache)
-<FilesMatch "^(\.env.*|lib\.php|.*\.sqlite)$">
+<FilesMatch "^(\.env.*|lib\.php|schema\.sql)$">
   Require all denied
 </FilesMatch>
 Options -Indexes

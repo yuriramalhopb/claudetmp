@@ -53,23 +53,20 @@ function db(): PDO
 {
     static $pdo = null;
     if ($pdo === null) {
-        $pdo = new PDO('sqlite:' . __DIR__ . '/data/pix.sqlite');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->exec('CREATE TABLE IF NOT EXISTS payments (
-            id INTEGER PRIMARY KEY,            -- id do pagamento no Mercado Pago
-            external_reference TEXT NOT NULL,
-            amount REAL NOT NULL,
-            description TEXT NOT NULL DEFAULT "",
-            status TEXT NOT NULL,
-            status_detail TEXT,
-            qr_code TEXT,
-            qr_code_base64 TEXT,
-            ticket_url TEXT,
-            expires_at TEXT,
-            created_at TEXT NOT NULL,
-            paid_at TEXT
-        )');
+        $dsn = sprintf(
+            'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+            env('DB_HOST', '127.0.0.1'),
+            env('DB_PORT', '3306'),
+            env('DB_NAME', 'pix_teste')
+        );
+        $pdo = new PDO($dsn, env('DB_USER', 'root'), env('DB_PASS'), [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+        $pdo->exec("SET time_zone = '-03:00'");
+        // Cria a tabela sozinho na primeira execução (o mesmo SQL está em schema.sql)
+        $pdo->exec(file_get_contents(__DIR__ . '/schema.sql'));
     }
     return $pdo;
 }
@@ -157,13 +154,13 @@ function criar_pix(float $amount, string $description, string $payerEmail): int
         throw new RuntimeException('O Mercado Pago não devolveu o código Pix. Sua conta tem Pix habilitado (chave Pix cadastrada)?');
     }
 
-    db()->prepare('INSERT OR REPLACE INTO payments
+    db()->prepare('REPLACE INTO payments
         (id, external_reference, amount, description, status, status_detail, qr_code, qr_code_base64, ticket_url, expires_at, created_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)')
         ->execute([
             (int) $p['id'], $ref, $amount, $body['description'], (string) $p['status'], $p['status_detail'] ?? null,
             $td['qr_code'], $td['qr_code_base64'] ?? null, $td['ticket_url'] ?? null,
-            $p['date_of_expiration'] ?? $expires, date('Y-m-d H:i:s'),
+            date('Y-m-d H:i:s', strtotime($p['date_of_expiration'] ?? $expires)), date('Y-m-d H:i:s'),
         ]);
     return (int) $p['id'];
 }

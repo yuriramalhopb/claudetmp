@@ -15,4 +15,3 @@
 *.keystore
 *.jks
 /pix-teste/.env
-/pix-teste/data/*.sqlite
